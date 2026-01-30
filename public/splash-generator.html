@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>루티니 스플래시 이미지 생성기</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .controls {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .controls button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background: #5B5CF9;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .controls button:hover {
+      background: #4A4BE8;
+    }
+
+    .controls button.active {
+      background: #3A3BD8;
+      box-shadow: 0 0 0 3px rgba(91, 92, 249, 0.3);
+    }
+
+    .splash-container {
+      position: relative;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+
+    .splash {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #7B7CFA 0%, #5B5CF9 50%, #4A4BE8 100%);
+      position: relative;
+    }
+
+    /* 로고 이미지 사용 */
+    .logo-img {
+      border-radius: 28px;
+      object-fit: contain;
+    }
+
+    .app-name {
+      font-size: 28px;
+      font-weight: bold;
+      color: white;
+      margin-top: 24px;
+      margin-bottom: 8px;
+    }
+
+    .tagline {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .size-info {
+      margin-top: 20px;
+      color: #666;
+      font-size: 14px;
+    }
+
+    /* ===== 스플래시 420x740 (앱인토스 세로형) ===== */
+    .splash.splash-420x740 {
+      width: 420px;
+      height: 740px;
+    }
+
+    .splash.splash-420x740 .logo-img {
+      width: 150px;
+      height: 150px;
+      border-radius: 36px;
+    }
+
+    .splash.splash-420x740 .app-name {
+      font-size: 32px;
+      margin-top: 28px;
+    }
+
+    .splash.splash-420x740 .tagline {
+      font-size: 14px;
+    }
+
+    /* ===== 스플래시 2x (840x1480) ===== */
+    .splash.splash-2x {
+      width: 840px;
+      height: 1480px;
+    }
+
+    .splash.splash-2x .logo-img {
+      width: 300px;
+      height: 300px;
+      border-radius: 72px;
+    }
+
+    .splash.splash-2x .app-name {
+      font-size: 64px;
+      margin-top: 56px;
+    }
+
+    .splash.splash-2x .tagline {
+      font-size: 28px;
+    }
+
+    /* ===== 앱 로고 600x600 ===== */
+    .splash.logo-600 {
+      width: 600px;
+      height: 600px;
+    }
+
+    .splash.logo-600 .logo-img {
+      width: 400px;
+      height: 400px;
+      border-radius: 80px;
+    }
+
+    .splash.logo-600 .app-name,
+    .splash.logo-600 .tagline {
+      display: none;
+    }
+
+    /* ===== 360x640 (최소 해상도) ===== */
+    .splash.splash-360x640 {
+      width: 360px;
+      height: 640px;
+    }
+
+    .splash.splash-360x640 .logo-img {
+      width: 130px;
+      height: 130px;
+      border-radius: 32px;
+    }
+
+    .splash.splash-360x640 .app-name {
+      font-size: 28px;
+      margin-top: 24px;
+    }
+
+    .splash.splash-360x640 .tagline {
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <h1>루티니 스플래시 이미지 생성기</h1>
+
+  <div class="controls">
+    <button onclick="setSize('splash-420x740')" class="active">스플래시 1x (420x740)</button>
+    <button onclick="setSize('splash-2x')">스플래시 2x (840x1480)</button>
+    <button onclick="setSize('splash-360x640')">최소 해상도 (360x640)</button>
+    <button onclick="setSize('logo-600')">앱 로고 (600x600)</button>
+  </div>
+
+  <div class="splash-container">
+    <div class="splash splash-420x740" id="splash">
+      <img src="../logo.png" alt="루티니 로고" class="logo-img" />
+      <div class="app-name">루티니</div>
+      <div class="tagline">루틴을 실천하면, 진짜 보상이 따라옵니다</div>
+    </div>
+  </div>
+
+  <p class="size-info" id="sizeInfo">현재 크기: 420 x 740px (스플래시 1x)</p>
+
+  <p style="margin-top: 20px; color: #999; font-size: 12px; text-align: center;">
+    Chrome: 개발자 도구(F12) > Elements > .splash 요소 우클릭 > "Capture node screenshot"<br>
+    Safari: 개발자 도구 > 요소 선택 > 우클릭 > "캡처 스크린샷"
+  </p>
+
+  <script>
+    const sizes = {
+      'splash-420x740': { w: 420, h: 740, name: '스플래시 1x' },
+      'splash-2x': { w: 840, h: 1480, name: '스플래시 2x' },
+      'splash-360x640': { w: 360, h: 640, name: '최소 해상도' },
+      'logo-600': { w: 600, h: 600, name: '앱 로고' }
+    };
+
+    function setSize(sizeKey) {
+      const splash = document.getElementById('splash');
+      const sizeInfo = document.getElementById('sizeInfo');
+      const size = sizes[sizeKey];
+      const buttons = document.querySelectorAll('.controls button');
+
+      // 버튼 활성화 상태 업데이트
+      buttons.forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      splash.className = 'splash ' + sizeKey;
+      sizeInfo.textContent = `현재 크기: ${size.w} x ${size.h}px (${size.name})`;
+    }
+  </script>
+</body>
+</html>

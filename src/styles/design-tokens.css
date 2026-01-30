@@ -1,0 +1,188 @@
+/**
+ * TDS (Toss Design System) Design Tokens
+ * Based on Figma: TDS-Components-for-AppsInToss
+ */
+
+@theme {
+  /* ========================================
+   * Colors
+   * ======================================== */
+
+  /* Primary Colors - Purple (Routiny Brand) */
+  --color-primary-50: #F0F0FF;
+  --color-primary-100: #E0E0FF;
+  --color-primary-200: #C4C4FF;
+  --color-primary-300: #A0A1FF;
+  --color-primary-400: #7D7EFC;
+  --color-primary-500: #5B5CF9;
+  --color-primary-600: #4A4BE8;
+  --color-primary-700: #3A3BD4;
+  --color-primary-800: #2D2EB8;
+  --color-primary-900: #22239A;
+
+  /* Blue Colors (Secondary) */
+  --color-blue-50: #EBF4FF;
+  --color-blue-100: #D0E4FF;
+  --color-blue-200: #A3CDFF;
+  --color-blue-300: #6BB1FF;
+  --color-blue-400: #4A9AFF;
+  --color-blue-500: #3183F6;
+  --color-blue-600: #2272EB;
+  --color-blue-700: #1961D0;
+  --color-blue-800: #1350A8;
+  --color-blue-900: #0D3F80;
+
+  /* Red (Error/Danger) */
+  --color-red-50: #FFEBEE;
+  --color-red-100: #FFCDD2;
+  --color-red-200: #EF9A9A;
+  --color-red-300: #E57373;
+  --color-red-400: #EF5350;
+  --color-red-500: #F04251;
+  --color-red-600: #E53935;
+  --color-red-700: #D32F2F;
+  --color-red-800: #C62828;
+  --color-red-900: #B71C1C;
+
+  /* Green (Success) */
+  --color-green-50: #E8F5E9;
+  --color-green-100: #C8E6C9;
+  --color-green-200: #A5D6A7;
+  --color-green-300: #81C784;
+  --color-green-400: #66BB6A;
+  --color-green-500: #00C853;
+  --color-green-600: #43A047;
+  --color-green-700: #388E3C;
+  --color-green-800: #2E7D32;
+  --color-green-900: #1B5E20;
+
+  /* Orange (Warning) */
+  --color-orange-50: #FFF3E0;
+  --color-orange-100: #FFE0B2;
+  --color-orange-200: #FFCC80;
+  --color-orange-300: #FFB74D;
+  --color-orange-400: #FFA726;
+  --color-orange-500: #FF9100;
+  --color-orange-600: #FB8C00;
+  --color-orange-700: #F57C00;
+  --color-orange-800: #EF6C00;
+  --color-orange-900: #E65100;
+
+  /* Grey Scale */
+  --color-grey-50: #F9FAFB;
+  --color-grey-100: #F2F4F6;
+  --color-grey-200: #E5E8EB;
+  --color-grey-300: #D1D6DB;
+  --color-grey-400: #B0B8C1;
+  --color-grey-500: #8B95A1;
+  --color-grey-600: #6B7684;
+  --color-grey-700: #4E5968;
+  --color-grey-800: #333D48;
+  --color-grey-900: #191F28;
+
+  /* Semantic Colors */
+  --color-white: #FFFFFF;
+  --color-black: #000000;
+  --color-background: #FFFFFF;
+  --color-background-secondary: #F2F4F6;
+  --color-text-primary: #191F28;
+  --color-text-secondary: #4E5968;
+  --color-text-tertiary: #8B95A1;
+  --color-text-disabled: #B0B8C1;
+  --color-border: #E5E8EB;
+  --color-divider: #F2F4F6;
+
+  /* ========================================
+   * Typography
+   * ======================================== */
+
+  --font-family-base: 'Toss Product Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Font Sizes (t1-t7 scale) */
+  --font-size-t1: 1.875rem; /* 30px */
+  --font-size-t2: 1.5rem;   /* 24px */
+  --font-size-t3: 1.375rem; /* 22px */
+  --font-size-t4: 1.125rem; /* 18px */
+  --font-size-t5: 1.0625rem; /* 17px */
+  --font-size-t6: 0.9375rem; /* 15px */
+  --font-size-t7: 0.8125rem; /* 13px */
+  --font-size-t8: 0.75rem;   /* 12px */
+  --font-size-t9: 0.6875rem; /* 11px */
+
+  /* Line Heights */
+  --line-height-t1: 2.5rem;   /* 40px */
+  --line-height-t2: 2rem;     /* 32px */
+  --line-height-t3: 1.9375rem; /* 31px */
+  --line-height-t4: 1.6875rem; /* 27px */
+  --line-height-t5: 1.5938rem; /* 25.5px */
+  --line-height-t6: 1.4375rem; /* 23px */
+  --line-height-t7: 1.2188rem; /* 19.5px */
+  --line-height-t8: 1.125rem;  /* 18px */
+  --line-height-t9: 1rem;      /* 16px */
+
+  /* Font Weights */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* ========================================
+   * Spacing
+   * ======================================== */
+
+  --spacing-0: 0;
+  --spacing-1: 0.25rem;  /* 4px */
+  --spacing-2: 0.5rem;   /* 8px */
+  --spacing-3: 0.75rem;  /* 12px */
+  --spacing-4: 1rem;     /* 16px */
+  --spacing-5: 1.25rem;  /* 20px */
+  --spacing-6: 1.5rem;   /* 24px */
+  --spacing-8: 2rem;     /* 32px */
+  --spacing-10: 2.5rem;  /* 40px */
+  --spacing-12: 3rem;    /* 48px */
+  --spacing-16: 4rem;    /* 64px */
+  --spacing-20: 5rem;    /* 80px */
+
+  /* ========================================
+   * Border Radius
+   * ======================================== */
+
+  --radius-none: 0;
+  --radius-sm: 0.25rem;  /* 4px */
+  --radius-md: 0.5rem;   /* 8px */
+  --radius-lg: 0.75rem;  /* 12px */
+  --radius-xl: 1rem;     /* 16px */
+  --radius-2xl: 1.5rem;  /* 24px */
+  --radius-full: 9999px;
+
+  /* ========================================
+   * Shadows
+   * ======================================== */
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-bottom-sheet: 0 -4px 16px rgba(0, 0, 0, 0.12);
+
+  /* ========================================
+   * Transitions
+   * ======================================== */
+
+  --transition-fast: 150ms ease-in-out;
+  --transition-normal: 200ms ease-in-out;
+  --transition-slow: 300ms ease-in-out;
+
+  /* ========================================
+   * Z-Index
+   * ======================================== */
+
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+  --z-toast: 1080;
+}
