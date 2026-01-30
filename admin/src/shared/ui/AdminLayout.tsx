@@ -1,7 +1,12 @@
-import { Outlet } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
+import { isAuthenticated } from '../lib/auth';
 import Sidebar from './Sidebar';
 
 export default function AdminLayout() {
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+
   return (
     <div className="flex h-screen">
       <Sidebar />
