@@ -3,7 +3,7 @@ import AdminLayout from '../shared/ui/AdminLayout';
 import LoginPage from '../pages/LoginPage';
 import DashboardPage from '../pages/DashboardPage';
 import UsersPage from '../pages/UsersPage';
-import TemplatesPage from '../pages/TemplatesPage';
+import CampaignsPage from '../pages/CampaignsPage';
 import RewardsPage from '../pages/RewardsPage';
 
 export const router = createHashRouter([
@@ -17,7 +17,7 @@ export const router = createHashRouter([
     children: [
       { index: true, element: <DashboardPage /> },
       { path: 'users', element: <UsersPage /> },
-      { path: 'templates', element: <TemplatesPage /> },
+      { path: 'campaigns', element: <CampaignsPage /> },
       { path: 'rewards', element: <RewardsPage /> },
     ],
   },

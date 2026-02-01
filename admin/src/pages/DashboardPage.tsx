@@ -7,7 +7,8 @@ import Spinner from '../shared/ui/Spinner';
 
 interface DashboardStats {
   totalUsers: number;
-  activeRoutines: number;
+  activeCampaigns: number;
+  activeParticipations: number;
   todayCheckIns: number;
   rewardApplications: number;
 }
@@ -29,17 +30,26 @@ export default function DashboardPage() {
   async function loadDashboard() {
     setLoading(true);
     try {
-      const [usersRes, routinesRes, checkInsRes, rewardsRes, chartRes] = await Promise.all([
-        supabase.from('users').select('*', { count: 'exact', head: true }),
-        supabase.from('user_routines').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-        supabase.from('check_ins').select('*', { count: 'exact', head: true }).eq('date', getToday()),
-        supabase.from('user_rewards').select('*', { count: 'exact', head: true }).eq('status', 'APPLY'),
-        supabase.from('check_ins').select('date').gte('date', getDaysAgo(6)),
-      ]);
+      const [usersRes, campaignsRes, participationsRes, checkInsRes, rewardsRes, chartRes] =
+        await Promise.all([
+          supabase.from('users').select('*', { count: 'exact', head: true }),
+          supabase
+            .from('campaigns')
+            .select('*', { count: 'exact', head: true })
+            .in('status', ['published', 'active']),
+          supabase
+            .from('campaign_participations')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'active'),
+          supabase.from('check_ins').select('*', { count: 'exact', head: true }).eq('date', getToday()),
+          supabase.from('user_rewards').select('*', { count: 'exact', head: true }).eq('status', 'APPLY'),
+          supabase.from('check_ins').select('date').gte('date', getDaysAgo(6)),
+        ]);
 
       setStats({
         totalUsers: usersRes.count ?? 0,
-        activeRoutines: routinesRes.count ?? 0,
+        activeCampaigns: campaignsRes.count ?? 0,
+        activeParticipations: participationsRes.count ?? 0,
         todayCheckIns: checkInsRes.count ?? 0,
         rewardApplications: rewardsRes.count ?? 0,
       });
@@ -77,9 +87,10 @@ export default function DashboardPage() {
     <div>
       <h1 className="mb-6 text-xl font-bold text-gray-900">대시보드</h1>
 
-      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <StatsCard title="총 사용자" value={formatNumber(stats?.totalUsers ?? 0)} icon="👤" />
-        <StatsCard title="활성 루틴" value={formatNumber(stats?.activeRoutines ?? 0)} icon="🔄" color="#22C55E" />
+        <StatsCard title="활성 캠페인" value={formatNumber(stats?.activeCampaigns ?? 0)} icon="📢" color="#5B5CF9" />
+        <StatsCard title="참여 중" value={formatNumber(stats?.activeParticipations ?? 0)} icon="🔄" color="#22C55E" />
         <StatsCard title="오늘 체크인" value={formatNumber(stats?.todayCheckIns ?? 0)} icon="✅" color="#3B82F6" />
         <StatsCard title="리워드 신청" value={formatNumber(stats?.rewardApplications ?? 0)} icon="🎁" color="#F97316" />
       </div>

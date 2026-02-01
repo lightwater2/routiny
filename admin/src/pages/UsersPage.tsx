@@ -5,12 +5,12 @@ import DataTable from '../shared/ui/DataTable';
 import Pagination from '../shared/ui/Pagination';
 import Spinner from '../shared/ui/Spinner';
 import type { Column } from '../shared/ui/DataTable';
-import type { DbUserWithRoutineCount } from '../shared/api/types';
+import type { DbUserWithParticipationCount } from '../shared/api/types';
 
 const PAGE_SIZE = 20;
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<DbUserWithRoutineCount[]>([]);
+  const [users, setUsers] = useState<DbUserWithParticipationCount[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -26,16 +26,16 @@ export default function UsersPage() {
 
     const { data, count } = await supabase
       .from('users')
-      .select('*, user_routines(count)', { count: 'exact' })
+      .select('*, campaign_participations(count)', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(from, to);
 
-    setUsers((data as DbUserWithRoutineCount[]) ?? []);
+    setUsers((data as DbUserWithParticipationCount[]) ?? []);
     setTotal(count ?? 0);
     setLoading(false);
   }
 
-  const columns: Column<DbUserWithRoutineCount>[] = [
+  const columns: Column<DbUserWithParticipationCount>[] = [
     {
       key: 'nickname',
       header: '닉네임',
@@ -49,9 +49,9 @@ export default function UsersPage() {
       ),
     },
     {
-      key: 'routines',
-      header: '루틴 수',
-      render: (row) => row.user_routines[0]?.count ?? 0,
+      key: 'participations',
+      header: '참여 수',
+      render: (row) => row.campaign_participations[0]?.count ?? 0,
     },
     {
       key: 'created_at',

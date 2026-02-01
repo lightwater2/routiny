@@ -4,7 +4,7 @@ import { logout } from '../lib/auth';
 const NAV_ITEMS = [
   { to: '/', label: '대시보드', icon: '📊' },
   { to: '/users', label: '사용자', icon: '👤' },
-  { to: '/templates', label: '루틴 템플릿', icon: '📋' },
+  { to: '/campaigns', label: '캠페인 관리', icon: '📢' },
   { to: '/rewards', label: '리워드 관리', icon: '🎁' },
 ];
 

@@ -50,6 +50,16 @@ export function getCategoryLabel(category: string): string {
   return map[category] ?? category;
 }
 
+export function getCampaignStatusLabel(status: string): string {
+  const map: Record<string, string> = {
+    draft: '초안',
+    published: '모집중',
+    active: '진행중',
+    ended: '종료',
+  };
+  return map[status] ?? status;
+}
+
 export function getRewardStatusLabel(status: string): string {
   const map: Record<string, string> = {
     LOCK: '잠김',
@@ -60,4 +70,16 @@ export function getRewardStatusLabel(status: string): string {
     DELIVERED: '배송완료',
   };
   return map[status] ?? status;
+}
+
+export function getVerificationTypeLabel(type: string): string {
+  const map: Record<string, string> = {
+    simple_check: '단순 체크',
+    text_input: '텍스트 입력',
+    photo_upload: '사진 인증',
+    counter_input: '숫자 입력',
+    time_record: '시간 기록',
+    receipt_record: '영수증 기록',
+  };
+  return map[type] ?? type;
 }

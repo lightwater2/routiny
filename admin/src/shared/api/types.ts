@@ -6,7 +6,8 @@ export type RoutineType = 'individual' | 'team';
 export type CategoryType = 'care' | 'health' | 'daily';
 export type CareSubCategory = 'baby' | 'pet' | 'senior';
 export type DifficultyLevel = 'easy' | 'medium' | 'hard';
-export type UserRoutineStatus = 'active' | 'completed' | 'abandoned';
+export type CampaignStatus = 'draft' | 'published' | 'active' | 'ended';
+export type ParticipationStatus = 'active' | 'completed' | 'abandoned' | 'force_ended';
 export type RewardStatus = 'LOCK' | 'PROGRESS' | 'UNLOCK' | 'APPLY' | 'SHIPPING' | 'DELIVERED';
 
 export type VerificationType =
@@ -31,7 +32,7 @@ export interface DbUser {
   updated_at: string;
 }
 
-export interface DbRoutineTemplate {
+export interface DbCampaign {
   id: string;
   title: string;
   description: string;
@@ -39,35 +40,33 @@ export interface DbRoutineTemplate {
   sub_category: CareSubCategory | null;
   type: RoutineType;
   difficulty: DifficultyLevel;
-  default_duration: number;
+  emoji: string;
+  start_date: string;
+  end_date: string;
+  target_days: number;
   verification_type: VerificationType;
   verification_config: Record<string, unknown>;
-  emoji: string;
-  is_active: boolean;
+  achievement_rate: number;
+  reward_name: string;
+  reward_description: string;
+  reward_image_url: string | null;
+  reward_category: string;
+  reward_brand: string | null;
+  max_participants: number | null;
+  current_participants: number;
+  is_featured: boolean;
+  status: CampaignStatus;
+  published_at: string | null;
   created_at: string;
   updated_at: string;
 }
 
-export interface DbReward {
-  id: string;
-  name: string;
-  description: string;
-  image_url: string | null;
-  category: string;
-  brand: string | null;
-  template_id: string;
-  created_at: string;
-}
-
-export interface DbUserRoutine {
+export interface DbCampaignParticipation {
   id: string;
   user_id: string;
-  template_id: string;
-  start_date: string;
-  end_date: string;
-  target_days: number;
+  campaign_id: string;
   completed_days: number;
-  status: UserRoutineStatus;
+  status: ParticipationStatus;
   notification_enabled: boolean;
   notification_time: string | null;
   created_at: string;
@@ -77,7 +76,7 @@ export interface DbUserRoutine {
 export interface DbCheckIn {
   id: string;
   user_id: string;
-  user_routine_id: string;
+  participation_id: string;
   date: string;
   verification_type: VerificationType;
   verification_data: Record<string, unknown>;
@@ -88,8 +87,7 @@ export interface DbCheckIn {
 export interface DbUserReward {
   id: string;
   user_id: string;
-  user_routine_id: string;
-  reward_id: string;
+  participation_id: string;
   status: RewardStatus;
   progress: number;
   unlocked_at: string | null;
@@ -106,19 +104,14 @@ export interface DbUserReward {
 // Joined Types (for admin queries)
 // =============================================
 
-export interface DbUserWithRoutineCount extends DbUser {
-  user_routines: { count: number }[];
-}
-
-export interface DbTemplateWithRewards extends DbRoutineTemplate {
-  rewards: DbReward[];
+export interface DbUserWithParticipationCount extends DbUser {
+  campaign_participations: { count: number }[];
 }
 
 export interface DbUserRewardJoined extends DbUserReward {
-  rewards: DbReward;
   users: Pick<DbUser, 'nickname'>;
-  user_routines: {
-    status: UserRoutineStatus;
-    routine_templates: Pick<DbRoutineTemplate, 'title' | 'emoji'>;
+  campaign_participations: {
+    status: ParticipationStatus;
+    campaigns: Pick<DbCampaign, 'title' | 'emoji' | 'reward_name'>;
   };
 }

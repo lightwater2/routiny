@@ -4,9 +4,16 @@ interface StatusBadgeProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
+  // Participation status
   active: 'bg-green-100 text-green-700',
   completed: 'bg-blue-100 text-blue-700',
   abandoned: 'bg-gray-100 text-gray-500',
+  force_ended: 'bg-red-100 text-red-600',
+  // Campaign status
+  draft: 'bg-gray-100 text-gray-500',
+  published: 'bg-purple-100 text-purple-700',
+  ended: 'bg-gray-100 text-gray-500',
+  // Reward status
   LOCK: 'bg-gray-100 text-gray-500',
   PROGRESS: 'bg-yellow-100 text-yellow-700',
   UNLOCK: 'bg-purple-100 text-purple-700',

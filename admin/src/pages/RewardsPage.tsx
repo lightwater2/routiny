@@ -33,7 +33,7 @@ export default function RewardsPage() {
     let query = supabase
       .from('user_rewards')
       .select(
-        '*, rewards(name), users(nickname), user_routines(status, routine_templates(title, emoji))',
+        '*, users(nickname), campaign_participations(status, campaigns(title, emoji, reward_name))',
         { count: 'exact' }
       )
       .order('updated_at', { ascending: false })
@@ -80,17 +80,17 @@ export default function RewardsPage() {
       render: (row) => <span className="font-medium">{row.users?.nickname ?? '-'}</span>,
     },
     {
-      key: 'routine',
-      header: '루틴',
+      key: 'campaign',
+      header: '캠페인',
       render: (row) => {
-        const template = row.user_routines?.routine_templates;
-        return template ? `${template.emoji} ${template.title}` : '-';
+        const campaign = row.campaign_participations?.campaigns;
+        return campaign ? `${campaign.emoji} ${campaign.title}` : '-';
       },
     },
     {
       key: 'reward',
       header: '리워드',
-      render: (row) => row.rewards?.name ?? '-',
+      render: (row) => row.campaign_participations?.campaigns?.reward_name ?? '-',
     },
     {
       key: 'status',
