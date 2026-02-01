@@ -6,6 +6,7 @@ const NAV_ITEMS = [
   { to: '/users', label: '사용자', icon: '👤' },
   { to: '/campaigns', label: '캠페인 관리', icon: '📢' },
   { to: '/rewards', label: '리워드 관리', icon: '🎁' },
+  { to: '/guide', label: '사용 가이드', icon: '📖' },
 ];
 
 export default function Sidebar() {
