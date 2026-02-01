@@ -1,18 +1,19 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../shared/api/supabase';
 import {
   getDifficultyLabel,
   getCategoryLabel,
   getVerificationTypeLabel,
 } from '../shared/lib/format';
-import Modal from '../shared/ui/Modal';
+import Spinner from '../shared/ui/Spinner';
 import type {
   CategoryType,
   CareSubCategory,
   RoutineType,
   DifficultyLevel,
   VerificationType,
+  DbCampaignTemplate,
 } from '../shared/api/types';
 
 const CATEGORIES: CategoryType[] = ['care', 'health', 'daily'];
@@ -28,7 +29,8 @@ const VERIFICATION_TYPES: VerificationType[] = [
   'receipt_record',
 ];
 
-interface CampaignForm {
+interface TemplateForm {
+  name: string;
   title: string;
   description: string;
   emoji: string;
@@ -36,8 +38,6 @@ interface CampaignForm {
   sub_category: CareSubCategory | '';
   type: RoutineType;
   difficulty: DifficultyLevel;
-  start_date: string;
-  end_date: string;
   target_days: number;
   verification_type: VerificationType;
   achievement_rate: number;
@@ -50,161 +50,135 @@ interface CampaignForm {
   is_featured: boolean;
 }
 
-const INITIAL_FORM: CampaignForm = {
-  title: '',
-  description: '',
-  emoji: '',
-  category: 'daily',
-  sub_category: '',
-  type: 'individual',
-  difficulty: 'medium',
-  start_date: '',
-  end_date: '',
-  target_days: 7,
-  verification_type: 'simple_check',
-  achievement_rate: 80,
-  reward_name: '',
-  reward_description: '',
-  reward_image_url: '',
-  reward_category: '',
-  reward_brand: '',
-  max_participants: '',
-  is_featured: false,
-};
-
 const inputClass =
   'w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#5B5CF9] focus:ring-1 focus:ring-[#5B5CF9]/30';
 const labelClass = 'mb-1.5 block text-sm font-medium text-gray-700';
 
-export default function CampaignCreatePage() {
+export default function TemplateEditPage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState<CampaignForm>(INITIAL_FORM);
+  const { id } = useParams<{ id: string }>();
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState<TemplateForm | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 템플릿으로 저장 모달
-  const [templateModalOpen, setTemplateModalOpen] = useState(false);
-  const [templateName, setTemplateName] = useState('');
-  const [savingTemplate, setSavingTemplate] = useState(false);
-  const [templateError, setTemplateError] = useState<string | null>(null);
+  useEffect(() => {
+    async function load() {
+      const { data } = await supabase
+        .from('campaign_templates')
+        .select('*')
+        .eq('id', id!)
+        .single();
 
-  function set<K extends keyof CampaignForm>(key: K, value: CampaignForm[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }));
-  }
+      if (!data) {
+        navigate('/templates');
+        return;
+      }
 
-  function calculateTargetDays() {
-    if (!form.start_date || !form.end_date) return;
-    const start = new Date(form.start_date);
-    const end = new Date(form.end_date);
-    const diff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-    if (diff > 0) set('target_days', diff);
+      const t = data as DbCampaignTemplate;
+      setForm({
+        name: t.name,
+        title: t.title,
+        description: t.description,
+        emoji: t.emoji,
+        category: t.category,
+        sub_category: t.sub_category ?? '',
+        type: t.type,
+        difficulty: t.difficulty,
+        target_days: t.target_days,
+        verification_type: t.verification_type,
+        achievement_rate: t.achievement_rate,
+        reward_name: t.reward_name,
+        reward_description: t.reward_description,
+        reward_image_url: t.reward_image_url ?? '',
+        reward_category: t.reward_category,
+        reward_brand: t.reward_brand ?? '',
+        max_participants: t.max_participants != null ? String(t.max_participants) : '',
+        is_featured: t.is_featured,
+      });
+      setLoading(false);
+    }
+    load();
+  }, [id, navigate]);
+
+  if (loading || !form) return <Spinner />;
+
+  function set<K extends keyof TemplateForm>(key: K, value: TemplateForm[K]) {
+    setForm((prev) => (prev ? { ...prev, [key]: value } : prev));
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!form) return;
     setError(null);
 
+    if (!form.name.trim()) return setError('템플릿 이름을 입력해주세요.');
     if (!form.title.trim()) return setError('캠페인명을 입력해주세요.');
     if (!form.emoji.trim()) return setError('이모지를 입력해주세요.');
-    if (!form.start_date || !form.end_date) return setError('기간을 설정해주세요.');
-    if (new Date(form.end_date) <= new Date(form.start_date))
-      return setError('종료일이 시작일보다 이후여야 합니다.');
     if (!form.reward_name.trim()) return setError('리워드명을 입력해주세요.');
 
     setSaving(true);
-    const { error: dbError } = await supabase.from('campaigns').insert({
-      title: form.title.trim(),
-      description: form.description.trim(),
-      emoji: form.emoji.trim(),
-      category: form.category,
-      sub_category: form.category === 'care' && form.sub_category ? form.sub_category : null,
-      type: form.type,
-      difficulty: form.difficulty,
-      start_date: form.start_date,
-      end_date: form.end_date,
-      target_days: form.target_days,
-      verification_type: form.verification_type,
-      verification_config: {},
-      achievement_rate: form.achievement_rate,
-      reward_name: form.reward_name.trim(),
-      reward_description: form.reward_description.trim(),
-      reward_image_url: form.reward_image_url.trim() || null,
-      reward_category: form.reward_category.trim(),
-      reward_brand: form.reward_brand.trim() || null,
-      max_participants: form.max_participants ? Number(form.max_participants) : null,
-      is_featured: form.is_featured,
-      status: 'draft',
-    });
+    const { error: dbError } = await supabase
+      .from('campaign_templates')
+      .update({
+        name: form.name.trim(),
+        title: form.title.trim(),
+        description: form.description.trim(),
+        emoji: form.emoji.trim(),
+        category: form.category,
+        sub_category: form.category === 'care' && form.sub_category ? form.sub_category : null,
+        type: form.type,
+        difficulty: form.difficulty,
+        target_days: form.target_days,
+        verification_type: form.verification_type,
+        verification_config: {},
+        achievement_rate: form.achievement_rate,
+        reward_name: form.reward_name.trim(),
+        reward_description: form.reward_description.trim(),
+        reward_image_url: form.reward_image_url.trim() || null,
+        reward_category: form.reward_category.trim(),
+        reward_brand: form.reward_brand.trim() || null,
+        max_participants: form.max_participants ? Number(form.max_participants) : null,
+        is_featured: form.is_featured,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id!);
 
     setSaving(false);
     if (dbError) {
       setError(`저장 실패: ${dbError.message}`);
       return;
     }
-    navigate('/campaigns');
-  }
-
-  async function handleSaveAsTemplate() {
-    setTemplateError(null);
-    if (!templateName.trim()) {
-      setTemplateError('템플릿 이름을 입력해주세요.');
-      return;
-    }
-    if (!form.title.trim()) {
-      setTemplateError('캠페인명을 먼저 입력해주세요.');
-      return;
-    }
-    if (!form.emoji.trim()) {
-      setTemplateError('이모지를 먼저 입력해주세요.');
-      return;
-    }
-
-    setSavingTemplate(true);
-    const { error: dbError } = await supabase.from('campaign_templates').insert({
-      name: templateName.trim(),
-      title: form.title.trim(),
-      description: form.description.trim(),
-      emoji: form.emoji.trim(),
-      category: form.category,
-      sub_category: form.category === 'care' && form.sub_category ? form.sub_category : null,
-      type: form.type,
-      difficulty: form.difficulty,
-      target_days: form.target_days,
-      verification_type: form.verification_type,
-      verification_config: {},
-      achievement_rate: form.achievement_rate,
-      reward_name: form.reward_name.trim(),
-      reward_description: form.reward_description.trim(),
-      reward_image_url: form.reward_image_url.trim() || null,
-      reward_category: form.reward_category.trim(),
-      reward_brand: form.reward_brand.trim() || null,
-      max_participants: form.max_participants ? Number(form.max_participants) : null,
-      is_featured: form.is_featured,
-    });
-
-    setSavingTemplate(false);
-    if (dbError) {
-      setTemplateError(`저장 실패: ${dbError.message}`);
-      return;
-    }
-    setTemplateModalOpen(false);
-    setTemplateName('');
-    alert('템플릿으로 저장되었습니다.');
+    navigate('/templates');
   }
 
   return (
     <div className="mx-auto max-w-2xl">
       <div className="mb-6 flex items-center gap-3">
         <button
-          onClick={() => navigate('/campaigns')}
+          onClick={() => navigate('/templates')}
           className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600"
         >
           &larr;
         </button>
-        <h1 className="text-xl font-bold text-gray-900">새 캠페인 만들기</h1>
+        <h1 className="text-xl font-bold text-gray-900">템플릿 편집</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* 템플릿 이름 */}
+        <Section title="템플릿 정보">
+          <div>
+            <label className={labelClass}>템플릿 이름 (관리용)</label>
+            <input
+              value={form.name}
+              onChange={(e) => set('name', e.target.value)}
+              placeholder="2월 러닝 캠페인 기본형"
+              className={inputClass}
+            />
+            <p className="mt-1 text-xs text-gray-400">관리자가 구분하기 위한 이름입니다.</p>
+          </div>
+        </Section>
+
         {/* 기본 정보 */}
         <Section title="기본 정보">
           <div className="flex gap-3">
@@ -306,35 +280,11 @@ export default function CampaignCreatePage() {
           </div>
         </Section>
 
-        {/* 기간 설정 */}
-        <Section title="기간 설정">
+        {/* 기간 & 인증 */}
+        <Section title="기간 & 인증 조건">
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className={labelClass}>시작일</label>
-              <input
-                type="date"
-                value={form.start_date}
-                onChange={(e) => {
-                  set('start_date', e.target.value);
-                  setTimeout(calculateTargetDays, 0);
-                }}
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>종료일</label>
-              <input
-                type="date"
-                value={form.end_date}
-                onChange={(e) => {
-                  set('end_date', e.target.value);
-                  setTimeout(calculateTargetDays, 0);
-                }}
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>목표 일수</label>
+              <label className={labelClass}>기본 목표 일수</label>
               <input
                 type="number"
                 value={form.target_days}
@@ -342,13 +292,8 @@ export default function CampaignCreatePage() {
                 min={1}
                 className={inputClass}
               />
+              <p className="mt-1 text-xs text-gray-400">캠페인 생성 시 날짜로 재계산됩니다.</p>
             </div>
-          </div>
-        </Section>
-
-        {/* 인증 & 달성 */}
-        <Section title="인증 & 달성 조건">
-          <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelClass}>인증 방식</label>
               <select
@@ -445,80 +390,23 @@ export default function CampaignCreatePage() {
           <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
         )}
 
-        <div className="flex justify-between border-t border-gray-100 pt-6">
+        <div className="flex justify-end gap-3 border-t border-gray-100 pt-6">
           <button
             type="button"
-            onClick={() => {
-              setTemplateName('');
-              setTemplateError(null);
-              setTemplateModalOpen(true);
-            }}
-            className="rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            onClick={() => navigate('/templates')}
+            className="rounded-lg px-5 py-2.5 text-sm text-gray-600 hover:bg-gray-100"
           >
-            템플릿으로 저장
+            취소
           </button>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => navigate('/campaigns')}
-              className="rounded-lg px-5 py-2.5 text-sm text-gray-600 hover:bg-gray-100"
-            >
-              취소
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded-lg bg-[#5B5CF9] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#4A4BE8] disabled:opacity-50"
-            >
-              {saving ? '저장 중...' : '캠페인 생성 (초안)'}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={saving}
+            className="rounded-lg bg-[#5B5CF9] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#4A4BE8] disabled:opacity-50"
+          >
+            {saving ? '저장 중...' : '변경사항 저장'}
+          </button>
         </div>
       </form>
-
-      {/* 템플릿으로 저장 모달 */}
-      <Modal
-        open={templateModalOpen}
-        onClose={() => setTemplateModalOpen(false)}
-        title="템플릿으로 저장"
-        footer={
-          <>
-            <button
-              onClick={() => setTemplateModalOpen(false)}
-              className="rounded-lg px-4 py-2 text-sm text-gray-600 hover:bg-gray-100"
-            >
-              취소
-            </button>
-            <button
-              onClick={handleSaveAsTemplate}
-              disabled={savingTemplate}
-              className="rounded-lg bg-[#5B5CF9] px-4 py-2 text-sm font-medium text-white hover:bg-[#4A4BE8] disabled:opacity-50"
-            >
-              {savingTemplate ? '저장 중...' : '저장'}
-            </button>
-          </>
-        }
-      >
-        <div className="space-y-4">
-          <p className="text-sm text-gray-500">
-            현재 폼의 내용을 템플릿으로 저장합니다. 날짜 정보는 제외됩니다.
-          </p>
-          <div>
-            <label className={labelClass}>템플릿 이름</label>
-            <input
-              value={templateName}
-              onChange={(e) => setTemplateName(e.target.value)}
-              placeholder="2월 러닝 캠페인 기본형"
-              className={inputClass}
-            />
-          </div>
-          {templateError && (
-            <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
-              {templateError}
-            </div>
-          )}
-        </div>
-      </Modal>
     </div>
   );
 }

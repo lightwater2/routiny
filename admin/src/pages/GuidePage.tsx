@@ -95,6 +95,66 @@ export default function GuidePage() {
         </div>
       </Section>
 
+      {/* 템플릿 관리 */}
+      <Section title="템플릿이란?">
+        <p className="text-sm text-gray-700">
+          템플릿은 날짜를 제외한 캠페인 설정의 스냅샷입니다. 반복적으로 생성하는 캠페인의 기본 정보를 미리 저장해두고, 필요할 때 날짜만 지정하여 캠페인 초안을 빠르게 만들 수 있습니다.
+        </p>
+        <div className="mt-3 rounded-lg border border-gray-100 bg-white p-4">
+          <p className="mb-2 text-xs font-semibold text-[#5B5CF9]">템플릿에 포함되는 정보</p>
+          <ul className="space-y-1 text-sm text-gray-700">
+            <li>기본 정보 (이모지, 제목, 설명, 카테고리, 유형, 난이도)</li>
+            <li>인증 조건 (인증 방식, 달성 기준, 최대 참여 인원)</li>
+            <li>리워드 (리워드명, 설명, 카테고리, 브랜드, 이미지)</li>
+            <li>기본 목표 일수, Featured 여부</li>
+          </ul>
+        </div>
+      </Section>
+
+      {/* 템플릿에서 캠페인 만들기 */}
+      <Section title="템플릿에서 캠페인 만들기">
+        <Steps
+          items={[
+            {
+              title: '템플릿 관리 페이지 이동',
+              desc: '사이드바에서 "템플릿 관리"를 클릭합니다.',
+            },
+            {
+              title: '캠페인 만들기 클릭',
+              desc: '원하는 템플릿의 "캠페인 만들기" 버튼을 클릭합니다.',
+            },
+            {
+              title: '날짜 입력',
+              desc: '시작일과 종료일만 입력합니다. 목표 일수는 자동 계산됩니다.',
+            },
+            {
+              title: '초안 생성 완료',
+              desc: '캠페인이 초안 상태로 생성되며 캠페인 목록으로 이동합니다.',
+            },
+          ]}
+        />
+      </Section>
+
+      {/* 캠페인에서 템플릿 저장 */}
+      <Section title="캠페인 생성 시 템플릿으로 저장">
+        <Steps
+          items={[
+            {
+              title: '캠페인 생성 폼에서 정보 입력',
+              desc: '캠페인 관리 > + 새 캠페인에서 정보를 입력합니다.',
+            },
+            {
+              title: '"템플릿으로 저장" 클릭',
+              desc: '폼 하단 좌측의 "템플릿으로 저장" 버튼을 클릭합니다.',
+            },
+            {
+              title: '템플릿 이름 입력',
+              desc: '관리용 이름을 입력하고 저장합니다. 날짜 정보는 제외됩니다.',
+            },
+          ]}
+        />
+      </Section>
+
       {/* 리워드 처리 */}
       <Section title="리워드 처리">
         <Steps

@@ -5,6 +5,7 @@ const NAV_ITEMS = [
   { to: '/', label: '대시보드', icon: '📊' },
   { to: '/users', label: '사용자', icon: '👤' },
   { to: '/campaigns', label: '캠페인 관리', icon: '📢' },
+  { to: '/templates', label: '템플릿 관리', icon: '📋' },
   { to: '/rewards', label: '리워드 관리', icon: '🎁' },
   { to: '/guide', label: '사용 가이드', icon: '📖' },
 ];

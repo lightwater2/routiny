@@ -115,3 +115,28 @@ export interface DbUserRewardJoined extends DbUserReward {
     campaigns: Pick<DbCampaign, 'title' | 'emoji' | 'reward_name'>;
   };
 }
+
+export interface DbCampaignTemplate {
+  id: string;
+  name: string;
+  title: string;
+  description: string;
+  category: CategoryType;
+  sub_category: CareSubCategory | null;
+  type: RoutineType;
+  difficulty: DifficultyLevel;
+  emoji: string;
+  target_days: number;
+  verification_type: VerificationType;
+  verification_config: Record<string, unknown>;
+  achievement_rate: number;
+  reward_name: string;
+  reward_description: string;
+  reward_image_url: string | null;
+  reward_category: string;
+  reward_brand: string | null;
+  max_participants: number | null;
+  is_featured: boolean;
+  created_at: string;
+  updated_at: string;
+}
