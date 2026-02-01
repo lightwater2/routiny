@@ -10,7 +10,7 @@ function toCheckIn(row: DbCheckIn): CheckIn {
   return {
     id: row.id,
     userId: row.user_id,
-    userRoutineId: row.user_routine_id,
+    participationId: row.participation_id,
     date: row.date,
     verificationType: row.verification_type,
     verificationData: row.verification_data,
@@ -21,7 +21,7 @@ function toCheckIn(row: DbCheckIn): CheckIn {
 
 /**
  * 체크인 생성
- * DB 트리거가 자동으로 user_routines.completed_days를 업데이트함
+ * DB 트리거가 자동으로 campaign_participations.completed_days를 업데이트함
  */
 export async function createCheckIn(params: CreateCheckInParams): Promise<CheckIn> {
   const user = await getCachedUser();
@@ -30,7 +30,7 @@ export async function createCheckIn(params: CreateCheckInParams): Promise<CheckI
     .from('check_ins')
     .insert({
       user_id: user.id,
-      user_routine_id: params.userRoutineId,
+      participation_id: params.participationId,
       date: params.date,
       verification_type: params.verificationType,
       verification_data: params.verificationData,
@@ -44,13 +44,13 @@ export async function createCheckIn(params: CreateCheckInParams): Promise<CheckI
 }
 
 /**
- * 루틴별 체크인 목록 조회
+ * 참여별 체크인 목록 조회
  */
-export async function getCheckInsByRoutine(userRoutineId: string): Promise<CheckIn[]> {
+export async function getCheckInsByParticipation(participationId: string): Promise<CheckIn[]> {
   const { data, error } = await supabase
     .from('check_ins')
     .select('*')
-    .eq('user_routine_id', userRoutineId)
+    .eq('participation_id', participationId)
     .order('date', { ascending: true });
 
   if (error) throw new Error(`체크인 조회 실패: ${error.message}`);
@@ -62,13 +62,13 @@ export async function getCheckInsByRoutine(userRoutineId: string): Promise<Check
  * 오늘 체크인 여부 확인
  */
 export async function isTodayCheckedIn(
-  userRoutineId: string,
+  participationId: string,
   today: string
 ): Promise<boolean> {
   const { data, error } = await supabase
     .from('check_ins')
     .select('id')
-    .eq('user_routine_id', userRoutineId)
+    .eq('participation_id', participationId)
     .eq('date', today)
     .maybeSingle();
 

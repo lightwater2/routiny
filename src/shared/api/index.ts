@@ -1,26 +1,30 @@
 export { supabase } from './supabase';
 export { getDeviceId, getCurrentUser, getCachedUser, clearUserCache } from './auth';
-export { getAllTemplates, getTemplatesByCategory, getTemplateById } from './routineTemplates';
 export {
-  createUserRoutine,
-  getActiveRoutines,
-  getAllUserRoutines,
-  getUserRoutineById,
-  updateUserRoutineStatus,
+  getActiveCampaigns,
+  getCampaignsByCategory,
+  getCampaignById,
+} from './campaigns';
+export {
+  joinCampaign,
+  getActiveParticipations,
+  getAllParticipations,
+  getParticipationById,
+  updateParticipationStatus,
 } from './userRoutines';
 export {
   createCheckIn,
-  getCheckInsByRoutine,
+  getCheckInsByParticipation,
   isTodayCheckedIn,
   getTotalCheckInCount,
 } from './checkIns';
 export {
   applyReward,
-  getRewardByRoutine,
+  getRewardByParticipation,
   getUnlockedRewardCount,
 } from './rewards';
 export type {
-  CreateUserRoutineParams,
+  JoinCampaignParams,
   CreateCheckInParams,
   ApplyRewardParams,
 } from './types';

@@ -1,4 +1,4 @@
-import type { UserRoutine, CheckIn, RewardStatus, VerificationConfig } from '../types';
+import type { CheckIn, RewardStatus, VerificationConfig, CampaignParticipation } from '../types';
 
 /**
  * 달성률 계산
@@ -14,10 +14,10 @@ export function calculateProgress(
 }
 
 /**
- * UserRoutine의 달성률 계산
+ * CampaignParticipation의 달성률 계산
  */
-export function calculateRoutineProgress(userRoutine: UserRoutine): number {
-  return calculateProgress(userRoutine.completedDays, userRoutine.targetDays);
+export function calculateRoutineProgress(participation: CampaignParticipation): number {
+  return calculateProgress(participation.completedDays, participation.campaign.targetDays);
 }
 
 /**

@@ -1,39 +1,30 @@
 import { supabase } from './supabase';
 import { getCachedUser } from './auth';
-import type { UserReward, RewardStatus, Reward } from '../types';
-import type { ApplyRewardParams, DbUserReward, DbReward } from './types';
-
-/**
- * DB reward를 프론트엔드 Reward 타입으로 변환
- */
-function toReward(row: DbReward): Reward {
-  return {
-    id: row.id,
-    name: row.name,
-    description: row.description,
-    imageUrl: row.image_url || '',
-    category: row.category,
-    brand: row.brand ?? undefined,
-  };
-}
+import { getCampaignById } from './campaigns';
+import type { UserReward, RewardStatus } from '../types';
+import type { ApplyRewardParams, DbUserReward } from './types';
 
 /**
  * DB 행을 프론트엔드 UserReward 타입으로 변환
  */
 async function toUserReward(row: DbUserReward): Promise<UserReward | null> {
-  const { data: rewardRow, error } = await supabase
-    .from('rewards')
-    .select('*')
-    .eq('id', row.reward_id)
+  // participation에서 campaign을 조회하여 리워드 정보 가져오기
+  const { data: participation } = await supabase
+    .from('campaign_participations')
+    .select('campaign_id')
+    .eq('id', row.participation_id)
     .single();
 
-  if (error || !rewardRow) return null;
+  if (!participation) return null;
+
+  const campaign = await getCampaignById(participation.campaign_id);
+  if (!campaign) return null;
 
   return {
     id: row.id,
     userId: row.user_id,
-    userRoutineId: row.user_routine_id,
-    reward: toReward(rewardRow as DbReward),
+    participationId: row.participation_id,
+    reward: campaign.reward,
     status: row.status,
     progress: row.progress,
     unlockedAt: row.unlocked_at ?? undefined,
@@ -54,7 +45,7 @@ export async function applyReward(params: ApplyRewardParams): Promise<UserReward
   const { data: existing } = await supabase
     .from('user_rewards')
     .select('*')
-    .eq('user_routine_id', params.userRoutineId)
+    .eq('participation_id', params.participationId)
     .maybeSingle();
 
   if (existing) {
@@ -83,8 +74,7 @@ export async function applyReward(params: ApplyRewardParams): Promise<UserReward
     .from('user_rewards')
     .insert({
       user_id: user.id,
-      user_routine_id: params.userRoutineId,
-      reward_id: params.rewardId,
+      participation_id: params.participationId,
       status: 'APPLY' as RewardStatus,
       progress: 100,
       applied_at: new Date().toISOString(),
@@ -101,13 +91,13 @@ export async function applyReward(params: ApplyRewardParams): Promise<UserReward
 }
 
 /**
- * 루틴의 리워드 상태 조회
+ * 참여의 리워드 상태 조회
  */
-export async function getRewardByRoutine(userRoutineId: string): Promise<UserReward | null> {
+export async function getRewardByParticipation(participationId: string): Promise<UserReward | null> {
   const { data, error } = await supabase
     .from('user_rewards')
     .select('*')
-    .eq('user_routine_id', userRoutineId)
+    .eq('participation_id', participationId)
     .maybeSingle();
 
   if (error || !data) return null;
