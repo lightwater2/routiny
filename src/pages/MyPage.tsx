@@ -3,28 +3,28 @@ import { useNavigate } from 'react-router-dom';
 import { Button, Card, Badge, ProgressBar, AppLayout, Profile, Loader } from '../shared/ui';
 import { calculateProgress } from '../shared/lib/calculation';
 import {
-  getAllUserRoutines,
+  getAllParticipations,
   getTotalCheckInCount,
   getUnlockedRewardCount,
 } from '../shared/api';
-import type { UserRoutine } from '../shared/types';
+import type { CampaignParticipation } from '../shared/types';
 
 interface UserStats {
-  totalRoutines: number;
-  completedRoutines: number;
-  activeRoutines: number;
+  totalParticipations: number;
+  completedParticipations: number;
+  activeParticipations: number;
   totalCheckIns: number;
   unlockedRewards: number;
 }
 
 export function MyPage() {
   const navigate = useNavigate();
-  const [routines, setRoutines] = useState<UserRoutine[]>([]);
+  const [participations, setParticipations] = useState<CampaignParticipation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState<UserStats>({
-    totalRoutines: 0,
-    completedRoutines: 0,
-    activeRoutines: 0,
+    totalParticipations: 0,
+    completedParticipations: 0,
+    activeParticipations: 0,
     totalCheckIns: 0,
     unlockedRewards: 0,
   });
@@ -32,21 +32,21 @@ export function MyPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [allRoutines, checkInCount, rewardCount] = await Promise.all([
-          getAllUserRoutines(),
+        const [allParticipations, checkInCount, rewardCount] = await Promise.all([
+          getAllParticipations(),
           getTotalCheckInCount(),
           getUnlockedRewardCount(),
         ]);
 
-        setRoutines(allRoutines);
+        setParticipations(allParticipations);
 
-        const activeCount = allRoutines.filter((r) => r.status === 'active').length;
-        const completedCount = allRoutines.filter((r) => r.status === 'completed').length;
+        const activeCount = allParticipations.filter((p) => p.status === 'active').length;
+        const completedCount = allParticipations.filter((p) => p.status === 'completed').length;
 
         setStats({
-          totalRoutines: allRoutines.length,
-          activeRoutines: activeCount,
-          completedRoutines: completedCount,
+          totalParticipations: allParticipations.length,
+          activeParticipations: activeCount,
+          completedParticipations: completedCount,
           totalCheckIns: checkInCount,
           unlockedRewards: rewardCount,
         });
@@ -59,7 +59,7 @@ export function MyPage() {
     fetchData();
   }, []);
 
-  const handleExploreRoutines = () => {
+  const handleExplore = () => {
     navigate('/');
   };
 
@@ -67,11 +67,28 @@ export function MyPage() {
     navigate('/active');
   };
 
-  // 완료율 계산
-  const overallProgress = routines.length > 0
+  const getStatusBadge = (status: CampaignParticipation['status'], progress: number) => {
+    switch (status) {
+      case 'active':
+        return { color: 'blue' as const, label: `${progress}%` };
+      case 'completed':
+        return { color: 'green' as const, label: '완료' };
+      case 'abandoned':
+        return { color: 'grey' as const, label: '포기' };
+      case 'force_ended':
+        return { color: 'grey' as const, label: '조기종료' };
+      default:
+        return { color: 'grey' as const, label: status };
+    }
+  };
+
+  // 전체 달성률 계산
+  const overallProgress = participations.length > 0
     ? Math.round(
-        routines.reduce((sum, r) => sum + calculateProgress(r.completedDays, r.targetDays), 0) /
-          routines.length
+        participations.reduce(
+          (sum, p) => sum + calculateProgress(p.completedDays, p.campaign.targetDays),
+          0
+        ) / participations.length
       )
     : 0;
 
@@ -111,7 +128,7 @@ export function MyPage() {
               진행 중인 루틴
             </span>
             <span className="text-[24px] font-bold text-[#5B5CF9]">
-              {stats.activeRoutines}
+              {stats.activeParticipations}
             </span>
           </Card>
           <Card variant="outlined" size="medium" className="border-[#E5E8EB]">
@@ -119,7 +136,7 @@ export function MyPage() {
               완료한 루틴
             </span>
             <span className="text-[24px] font-bold text-[#15C67F]">
-              {stats.completedRoutines}
+              {stats.completedParticipations}
             </span>
           </Card>
           <Card variant="outlined" size="medium" className="border-[#E5E8EB]">
@@ -141,7 +158,7 @@ export function MyPage() {
         </div>
 
         {/* Overall Progress */}
-        {routines.length > 0 && (
+        {participations.length > 0 && (
           <Card variant="elevated" size="medium" className="mb-[24px]">
             <div className="flex justify-between items-center mb-[12px]">
               <h3 className="text-[16px] font-semibold text-[#191F28]">
@@ -155,13 +172,13 @@ export function MyPage() {
           </Card>
         )}
 
-        {/* Recent Routines */}
+        {/* Recent Participations */}
         <div className="mb-[24px]">
           <div className="flex justify-between items-center mb-[16px]">
             <h3 className="text-[16px] font-semibold text-[#191F28]">
               내 루틴
             </h3>
-            {routines.length > 0 && (
+            {participations.length > 0 && (
               <button
                 onClick={handleActiveRoutines}
                 className="text-[14px] text-[#5B5CF9] font-medium"
@@ -171,7 +188,7 @@ export function MyPage() {
             )}
           </div>
 
-          {routines.length === 0 ? (
+          {participations.length === 0 ? (
             <Card variant="outlined" size="medium" className="border-[#E5E8EB]">
               <div className="text-center py-[24px]">
                 <span className="text-[48px] block mb-[12px]">🌱</span>
@@ -181,48 +198,50 @@ export function MyPage() {
                 <Button
                   size="medium"
                   variant="solid"
-                  onClick={handleExploreRoutines}
+                  onClick={handleExplore}
                   className="bg-[#5B5CF9] hover:bg-[#4A4BE8]"
                 >
-                  루틴 둘러보기
+                  캠페인 둘러보기
                 </Button>
               </div>
             </Card>
           ) : (
             <div className="flex flex-col gap-[12px]">
-              {routines.slice(0, 3).map((routine) => {
+              {participations.slice(0, 3).map((participation) => {
                 const progress = calculateProgress(
-                  routine.completedDays,
-                  routine.targetDays
+                  participation.completedDays,
+                  participation.campaign.targetDays
                 );
+                const badge = getStatusBadge(participation.status, progress);
+
                 return (
                   <Card
-                    key={routine.id}
+                    key={participation.id}
                     variant="outlined"
                     size="medium"
                     className="border-[#E5E8EB] cursor-pointer"
-                    onClick={() => navigate(`/active/${routine.id}`)}
+                    onClick={() => navigate(`/active/${participation.id}`)}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-[12px]">
                         <span className="text-[24px]">
-                          {routine.template.emoji}
+                          {participation.campaign.emoji}
                         </span>
                         <div>
                           <h4 className="text-[15px] font-semibold text-[#191F28]">
-                            {routine.template.title}
+                            {participation.campaign.title}
                           </h4>
                           <p className="text-[13px] text-[#8B95A1]">
-                            {routine.completedDays}/{routine.targetDays}일 완료
+                            {participation.completedDays}/{participation.campaign.targetDays}일 완료
                           </p>
                         </div>
                       </div>
                       <Badge
-                        color={routine.status === 'active' ? 'blue' : 'green'}
+                        color={badge.color}
                         variant="weak"
                         size="small"
                       >
-                        {routine.status === 'active' ? `${progress}%` : '완료'}
+                        {badge.label}
                       </Badge>
                     </div>
                   </Card>
@@ -237,10 +256,10 @@ export function MyPage() {
           <Button
             size="large"
             variant="outline"
-            onClick={handleExploreRoutines}
+            onClick={handleExplore}
             className="w-full border-[#E5E8EB] text-[#4E5968]"
           >
-            새 루틴 시작하기
+            새 캠페인 참여하기
           </Button>
         </div>
 

@@ -16,13 +16,13 @@ import {
   determineRewardStatus,
   getRewardStatusMessage,
 } from '../shared/lib/calculation';
-import { getUserRoutineById, getCheckInsByRoutine } from '../shared/api';
-import type { UserRoutine, CheckIn } from '../shared/types';
+import { getParticipationById, getCheckInsByParticipation } from '../shared/api';
+import type { CampaignParticipation, CheckIn } from '../shared/types';
 
 export function ActiveRoutineDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [userRoutine, setUserRoutine] = useState<UserRoutine | null>(null);
+  const [participation, setParticipation] = useState<CampaignParticipation | null>(null);
   const [checkIns, setCheckIns] = useState<CheckIn[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -33,15 +33,15 @@ export function ActiveRoutineDetailPage() {
       try {
         if (!id) return;
 
-        const [routine, routineCheckIns] = await Promise.all([
-          getUserRoutineById(id),
-          getCheckInsByRoutine(id),
+        const [participationData, participationCheckIns] = await Promise.all([
+          getParticipationById(id),
+          getCheckInsByParticipation(id),
         ]);
 
-        setUserRoutine(routine);
-        setCheckIns(routineCheckIns);
+        setParticipation(participationData);
+        setCheckIns(participationCheckIns);
       } catch (error) {
-        console.error('루틴 상세 조회 실패:', error);
+        console.error('참여 상세 조회 실패:', error);
       } finally {
         setIsLoading(false);
       }
@@ -59,7 +59,7 @@ export function ActiveRoutineDetailPage() {
     );
   }
 
-  if (!userRoutine) {
+  if (!participation) {
     return (
       <AppLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] px-[20px]">
@@ -80,24 +80,24 @@ export function ActiveRoutineDetailPage() {
     );
   }
 
-  const template = userRoutine.template;
-  const progress = calculateProgress(userRoutine.completedDays, userRoutine.targetDays);
-  const daysRemaining = getDaysRemaining(userRoutine.endDate);
-  const daysElapsed = getDaysElapsed(userRoutine.startDate);
+  const campaign = participation.campaign;
+  const progress = calculateProgress(participation.completedDays, campaign.targetDays);
+  const daysRemaining = getDaysRemaining(campaign.endDate);
+  const daysElapsed = getDaysElapsed(campaign.startDate);
   const progressMessage = getProgressMessage(progress);
   const rewardStatus = determineRewardStatus(progress, true);
   const rewardMessage = getRewardStatusMessage(rewardStatus);
 
   const isTodayChecked = checkIns.some((c) => c.date === today);
-  const dateRange = getDateRange(userRoutine.startDate, userRoutine.endDate);
+  const dateRange = getDateRange(campaign.startDate, campaign.endDate);
   const checkInDates = new Set(checkIns.map((c) => c.date));
 
   const handleCheckIn = () => {
-    navigate(`/active/${userRoutine.id}/checkin`);
+    navigate(`/active/${participation.id}/checkin`);
   };
 
   const handleRewardDetail = () => {
-    navigate(`/reward/${userRoutine.id}`);
+    navigate(`/reward/${participation.id}`);
   };
 
   return (
@@ -119,13 +119,13 @@ export function ActiveRoutineDetailPage() {
           </div>
 
           <div className="flex items-center gap-[10px] mb-[8px]">
-            <span className="text-[32px]">{template.emoji}</span>
+            <span className="text-[32px]">{campaign.emoji}</span>
             <h1 className="text-[24px] font-bold text-[#191F28]">
-              {template.title}
+              {campaign.title}
             </h1>
           </div>
           <p className="text-[14px] text-[#8B95A1]">
-            {template.description}
+            {campaign.description}
           </p>
         </div>
 
@@ -147,7 +147,7 @@ export function ActiveRoutineDetailPage() {
                 완료
               </span>
               <span className="text-[18px] font-bold text-[#191F28]">
-                {userRoutine.completedDays}일
+                {participation.completedDays}일
               </span>
             </div>
             <div className="text-center">
@@ -155,7 +155,7 @@ export function ActiveRoutineDetailPage() {
                 목표
               </span>
               <span className="text-[18px] font-bold text-[#191F28]">
-                {userRoutine.targetDays}일
+                {campaign.targetDays}일
               </span>
             </div>
             <div className="text-center">
@@ -265,7 +265,7 @@ export function ActiveRoutineDetailPage() {
               </div>
               <div>
                 <h4 className="text-[15px] font-semibold text-[#191F28]">
-                  {template.reward.name}
+                  {campaign.reward.name}
                 </h4>
                 <p className="text-[13px] text-[#8B95A1]">
                   {rewardMessage}
@@ -310,7 +310,7 @@ export function ActiveRoutineDetailPage() {
         {/* Period Info */}
         <div className="mt-[16px] text-center">
           <p className="text-[13px] text-[#8B95A1]">
-            {formatDateKorean(userRoutine.startDate)} ~ {formatDateKorean(userRoutine.endDate)}
+            {formatDateKorean(campaign.startDate)} ~ {formatDateKorean(campaign.endDate)}
           </p>
         </div>
       </div>

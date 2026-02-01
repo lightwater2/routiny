@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Badge, Card, AppLayout, Loader } from '../shared/ui';
 import { getToday, formatDateWithDay } from '../shared/lib/date';
-import { getUserRoutineById, createCheckIn } from '../shared/api';
+import { getParticipationById, createCheckIn } from '../shared/api';
 import {
   TimeRecordInput,
   TextInput,
@@ -11,12 +11,12 @@ import {
   SimpleCheck,
   ReceiptRecordInput,
 } from '../features/checkin/ui';
-import type { UserRoutine, CheckInData } from '../shared/types';
+import type { CampaignParticipation, CheckInData } from '../shared/types';
 
 export function CheckInPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [userRoutine, setUserRoutine] = useState<UserRoutine | null>(null);
+  const [participation, setParticipation] = useState<CampaignParticipation | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -26,10 +26,10 @@ export function CheckInPage() {
     async function fetchData() {
       try {
         if (!id) return;
-        const routine = await getUserRoutineById(id);
-        setUserRoutine(routine);
+        const data = await getParticipationById(id);
+        setParticipation(data);
       } catch (error) {
-        console.error('루틴 조회 실패:', error);
+        console.error('참여 조회 실패:', error);
       } finally {
         setIsLoading(false);
       }
@@ -38,15 +38,15 @@ export function CheckInPage() {
   }, [id]);
 
   const handleCheckIn = async (data: CheckInData) => {
-    if (!userRoutine || isSubmitting) return;
+    if (!participation || isSubmitting) return;
 
     setIsSubmitting(true);
 
     try {
       await createCheckIn({
-        userRoutineId: userRoutine.id,
+        participationId: participation.id,
         date: today,
-        verificationType: userRoutine.template.verificationType,
+        verificationType: participation.campaign.verificationType,
         verificationData: data,
       });
 
@@ -69,7 +69,7 @@ export function CheckInPage() {
     );
   }
 
-  if (!userRoutine) {
+  if (!participation) {
     return (
       <AppLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] px-[20px]">
@@ -82,14 +82,14 @@ export function CheckInPage() {
     );
   }
 
-  const template = userRoutine.template;
+  const campaign = participation.campaign;
 
   const renderCheckInInput = () => {
-    switch (template.verificationType) {
+    switch (campaign.verificationType) {
       case 'time_record':
         return (
           <TimeRecordInput
-            placeholder={template.verificationConfig.placeholder}
+            placeholder={campaign.verificationConfig.placeholder}
             onSubmit={handleCheckIn}
           />
         );
@@ -97,7 +97,7 @@ export function CheckInPage() {
       case 'text_input':
         return (
           <TextInput
-            placeholder={template.verificationConfig.placeholder}
+            placeholder={campaign.verificationConfig.placeholder}
             onSubmit={handleCheckIn}
           />
         );
@@ -105,7 +105,7 @@ export function CheckInPage() {
       case 'photo_upload':
         return (
           <PhotoUpload
-            placeholder={template.verificationConfig.placeholder}
+            placeholder={campaign.verificationConfig.placeholder}
             onSubmit={handleCheckIn}
           />
         );
@@ -113,7 +113,7 @@ export function CheckInPage() {
       case 'counter_input':
         return (
           <CounterInput
-            config={template.verificationConfig}
+            config={campaign.verificationConfig}
             onSubmit={handleCheckIn}
           />
         );
@@ -121,8 +121,8 @@ export function CheckInPage() {
       case 'simple_check':
         return (
           <SimpleCheck
-            title={template.title}
-            emoji={template.emoji}
+            title={campaign.title}
+            emoji={campaign.emoji}
             onSubmit={handleCheckIn}
           />
         );
@@ -130,7 +130,7 @@ export function CheckInPage() {
       case 'receipt_record':
         return (
           <ReceiptRecordInput
-            config={template.verificationConfig}
+            config={campaign.verificationConfig}
             onSubmit={handleCheckIn}
           />
         );
@@ -155,9 +155,9 @@ export function CheckInPage() {
           </Badge>
 
           <div className="flex items-center gap-[10px] mb-[8px]">
-            <span className="text-[28px]">{template.emoji}</span>
+            <span className="text-[28px]">{campaign.emoji}</span>
             <h1 className="text-[24px] font-bold text-[#191F28]">
-              {template.title}
+              {campaign.title}
             </h1>
           </div>
           <p className="text-[14px] text-[#8B95A1]">
@@ -173,7 +173,7 @@ export function CheckInPage() {
                 현재 진행
               </span>
               <span className="text-[16px] font-semibold text-[#191F28]">
-                {userRoutine.completedDays} / {userRoutine.targetDays}일
+                {participation.completedDays} / {campaign.targetDays}일
               </span>
             </div>
             <div className="text-right">
@@ -181,7 +181,7 @@ export function CheckInPage() {
                 달성률
               </span>
               <span className="text-[16px] font-semibold text-[#5B5CF9]">
-                {Math.round((userRoutine.completedDays / userRoutine.targetDays) * 100)}%
+                {Math.round((participation.completedDays / campaign.targetDays) * 100)}%
               </span>
             </div>
           </div>

@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button, Card, TextField, AppLayout, Loader } from '../shared/ui';
-import { getUserRoutineById, applyReward } from '../shared/api';
-import type { UserRoutine, ShippingInfo } from '../shared/types';
+import { getParticipationById, applyReward } from '../shared/api';
+import type { CampaignParticipation, ShippingInfo } from '../shared/types';
 
 export function RewardApplyPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [userRoutine, setUserRoutine] = useState<UserRoutine | null>(null);
+  const [participation, setParticipation] = useState<CampaignParticipation | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -23,10 +23,10 @@ export function RewardApplyPage() {
     async function fetchData() {
       try {
         if (!id) return;
-        const routine = await getUserRoutineById(id);
-        setUserRoutine(routine);
+        const data = await getParticipationById(id);
+        setParticipation(data);
       } catch (error) {
-        console.error('루틴 조회 실패:', error);
+        console.error('참여 조회 실패:', error);
       } finally {
         setIsLoading(false);
       }
@@ -42,7 +42,7 @@ export function RewardApplyPage() {
   };
 
   const handleSubmit = async () => {
-    if (!userRoutine || isSubmitting) return;
+    if (!participation || isSubmitting) return;
 
     const { name, phone, address, zipCode } = shippingInfo;
     if (!name || !phone || !address || !zipCode) {
@@ -54,8 +54,7 @@ export function RewardApplyPage() {
 
     try {
       await applyReward({
-        userRoutineId: userRoutine.id,
-        rewardId: userRoutine.template.reward.id,
+        participationId: participation.id,
         shippingInfo,
       });
 
@@ -78,7 +77,7 @@ export function RewardApplyPage() {
     );
   }
 
-  if (!userRoutine) {
+  if (!participation) {
     return (
       <AppLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] px-[20px]">
@@ -91,7 +90,7 @@ export function RewardApplyPage() {
     );
   }
 
-  const template = userRoutine.template;
+  const campaign = participation.campaign;
 
   const isValid =
     shippingInfo.name.trim() &&
@@ -117,15 +116,15 @@ export function RewardApplyPage() {
           <div className="flex items-center gap-[12px]">
             <div className="w-[64px] h-[64px] rounded-[12px] bg-[#F2F4F6] flex items-center justify-center shrink-0">
               <span className="text-[10px] text-[#5B5CF9] font-medium text-center">
-                {template.reward.category}
+                {campaign.reward.category}
               </span>
             </div>
             <div>
               <h3 className="text-[16px] font-semibold text-[#191F28]">
-                {template.reward.name}
+                {campaign.reward.name}
               </h3>
               <p className="text-[13px] text-[#8B95A1]">
-                {template.title} 달성 리워드
+                {campaign.title} 달성 리워드
               </p>
             </div>
           </div>

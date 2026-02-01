@@ -1,17 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Button, Card, Badge, Switch, AppLayout } from '../shared/ui';
-import { getRoutineById, categoryInfo } from '../entities/routine';
-import { getToday, addDays, formatDateKorean } from '../shared/lib/date';
-import { createUserRoutine } from '../shared/api';
-import type { RoutineTemplate } from '../shared/types';
-
-const durationOptions = [
-  { days: 7, label: '7일', description: '1주일 도전' },
-  { days: 14, label: '14일', description: '2주 도전' },
-  { days: 21, label: '21일', description: '3주 습관 형성' },
-  { days: 30, label: '30일', description: '한 달 챌린지' },
-];
+import { Button, Card, Badge, Switch, AppLayout, Loader } from '../shared/ui';
+import { categoryInfo } from '../entities/campaign';
+import { formatDateKorean } from '../shared/lib/date';
+import { joinCampaign, getCampaignById } from '../shared/api';
+import type { Campaign } from '../shared/types';
 
 const timeOptions = [
   '06:00', '07:00', '08:00', '09:00', '10:00',
@@ -26,20 +19,45 @@ export function RoutineSetupPage() {
   const location = useLocation();
   const routineType = location.state?.routineType || 'individual';
 
-  const routine = getRoutineById(id || '') as RoutineTemplate | undefined;
-
-  const [selectedDuration, setSelectedDuration] = useState(routine?.defaultDuration || 14);
+  const [campaign, setCampaign] = useState<Campaign | null>(location.state?.campaign || null);
+  const [isLoading, setIsLoading] = useState(!campaign);
   const [notificationEnabled, setNotificationEnabled] = useState(true);
   const [notificationTime, setNotificationTime] = useState('09:00');
-  const [isStarting, setIsStarting] = useState(false);
+  const [isJoining, setIsJoining] = useState(false);
 
-  if (!routine) {
+  useEffect(() => {
+    if (campaign) return;
+    async function fetchCampaign() {
+      try {
+        if (!id) return;
+        const data = await getCampaignById(id);
+        setCampaign(data);
+      } catch (error) {
+        console.error('캠페인 조회 실패:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchCampaign();
+  }, [id, campaign]);
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader size="medium" />
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!campaign) {
     return (
       <AppLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] px-[20px]">
           <span className="text-[48px] mb-[16px]">😢</span>
           <h2 className="text-[20px] font-bold text-[#191F28] mb-[8px]">
-            루틴을 찾을 수 없어요
+            캠페인을 찾을 수 없어요
           </h2>
           <Button
             size="medium"
@@ -54,30 +72,25 @@ export function RoutineSetupPage() {
     );
   }
 
-  const categoryData = categoryInfo[routine.category];
-  const startDate = getToday();
-  const endDate = addDays(startDate, selectedDuration - 1);
+  const categoryData = categoryInfo[campaign.category];
 
-  const handleStart = async () => {
-    if (isStarting) return;
-    setIsStarting(true);
+  const handleJoin = async () => {
+    if (isJoining) return;
+    setIsJoining(true);
 
     try {
-      await createUserRoutine({
-        templateId: routine.id,
-        startDate,
-        endDate,
-        targetDays: selectedDuration,
+      await joinCampaign({
+        campaignId: campaign.id,
         notificationEnabled,
         notificationTime: notificationEnabled ? notificationTime : undefined,
       });
 
       navigate('/active', { replace: true });
     } catch (error) {
-      console.error('루틴 시작 실패:', error);
-      alert('루틴 시작에 실패했어요. 다시 시도해주세요.');
+      console.error('캠페인 참여 실패:', error);
+      alert('캠페인 참여에 실패했어요. 다시 시도해주세요.');
     } finally {
-      setIsStarting(false);
+      setIsJoining(false);
     }
   };
 
@@ -87,13 +100,13 @@ export function RoutineSetupPage() {
     <Button
       size="large"
       variant="solid"
-      onClick={handleStart}
-      disabled={isStarting}
-      loading={isStarting}
+      onClick={handleJoin}
+      disabled={isJoining}
+      loading={isJoining}
       className="w-full bg-[#5B5CF9] hover:bg-[#4A4BE8]"
     >
       <span className="flex items-center justify-center gap-[8px]">
-        루틴 시작하기
+        캠페인 참여하기
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
           <path
             d="M7.5 15L12.5 10L7.5 5"
@@ -132,62 +145,45 @@ export function RoutineSetupPage() {
           </div>
 
           <div className="flex items-center gap-[10px] mb-[8px]">
-            <span className="text-[28px]">{routine.emoji}</span>
+            <span className="text-[28px]">{campaign.emoji}</span>
             <h1 className="text-[24px] font-bold text-[#191F28]">
-              {routine.title}
+              {campaign.title}
             </h1>
           </div>
           <p className="text-[14px] text-[#8B95A1]">
-            루틴을 시작하기 전에 몇 가지 설정을 해주세요.
+            캠페인 정보를 확인하고 참여해주세요.
           </p>
         </div>
 
-        {/* Duration Selection */}
+        {/* Campaign Info (읽기 전용) */}
         <Card variant="outlined" size="medium" className="mb-[16px] border-[#E5E8EB]">
           <h3 className="text-[16px] font-semibold text-[#191F28] mb-[16px]">
-            도전 기간
+            캠페인 정보
           </h3>
-          <div className="grid grid-cols-2 gap-[12px]">
-            {durationOptions.map((option) => (
-              <button
-                key={option.days}
-                onClick={() => setSelectedDuration(option.days)}
-                className={`
-                  p-[16px] rounded-[12px] border-2 transition-all text-left
-                  ${selectedDuration === option.days
-                    ? 'border-[#5B5CF9] bg-[#F0F0FF]'
-                    : 'border-[#E5E8EB] bg-white hover:border-[#B0B8C1]'
-                  }
-                `}
-              >
-                <span
-                  className={`text-[20px] font-bold block mb-[4px] ${
-                    selectedDuration === option.days
-                      ? 'text-[#5B5CF9]'
-                      : 'text-[#191F28]'
-                  }`}
-                >
-                  {option.label}
-                </span>
-                <span className="text-[13px] text-[#8B95A1]">
-                  {option.description}
-                </span>
-              </button>
-            ))}
-          </div>
 
-          {/* Date Preview */}
-          <div className="mt-[16px] p-[12px] bg-[#F7F8F9] rounded-[8px]">
+          <div className="p-[12px] bg-[#F7F8F9] rounded-[8px]">
             <div className="flex justify-between items-center">
               <span className="text-[13px] text-[#6B7684]">시작일</span>
               <span className="text-[14px] font-medium text-[#191F28]">
-                {formatDateKorean(startDate)}
+                {formatDateKorean(campaign.startDate)}
               </span>
             </div>
             <div className="flex justify-between items-center mt-[8px]">
               <span className="text-[13px] text-[#6B7684]">종료일</span>
               <span className="text-[14px] font-medium text-[#191F28]">
-                {formatDateKorean(endDate)}
+                {formatDateKorean(campaign.endDate)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center mt-[8px]">
+              <span className="text-[13px] text-[#6B7684]">기간</span>
+              <span className="text-[14px] font-medium text-[#191F28]">
+                {campaign.targetDays}일
+              </span>
+            </div>
+            <div className="flex justify-between items-center mt-[8px]">
+              <span className="text-[13px] text-[#6B7684]">달성 기준</span>
+              <span className="text-[14px] font-medium text-[#5B5CF9]">
+                {campaign.achievementRate}% 이상
               </span>
             </div>
           </div>
@@ -269,15 +265,15 @@ export function RoutineSetupPage() {
           <div className="flex items-center gap-[16px]">
             <div className="w-[64px] h-[64px] rounded-[12px] bg-[#F2F4F6] flex items-center justify-center shrink-0">
               <span className="text-[10px] text-[#5B5CF9] font-medium text-center">
-                {routine.reward.category}
+                {campaign.reward.category}
               </span>
             </div>
             <div className="flex-1">
               <h4 className="text-[15px] font-semibold text-[#191F28] mb-[4px]">
-                {routine.reward.name}
+                {campaign.reward.name}
               </h4>
               <p className="text-[13px] text-[#8B95A1] line-clamp-2">
-                90% 이상 달성 시 지급
+                {campaign.achievementRate}% 이상 달성 시 지급
               </p>
             </div>
           </div>
@@ -305,9 +301,9 @@ export function RoutineSetupPage() {
             />
           </svg>
           <p className="text-[13px] text-[#8B95A1]">
-            루틴을 시작하면 매일 체크인을 진행할 수 있어요.
-            {routine.verificationConfig.frequency === 'weekly'
-              ? ` 주 ${routine.verificationConfig.weeklyTarget}회 인증이 필요해요.`
+            캠페인에 참여하면 매일 체크인을 진행할 수 있어요.
+            {campaign.verificationConfig.frequency === 'weekly'
+              ? ` 주 ${campaign.verificationConfig.weeklyTarget}회 인증이 필요해요.`
               : ' 매일 인증이 필요해요.'}
           </p>
         </div>

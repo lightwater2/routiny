@@ -6,8 +6,8 @@ import {
   determineRewardStatus,
   getRewardStatusMessage,
 } from '../shared/lib/calculation';
-import { getUserRoutineById, getRewardByRoutine } from '../shared/api';
-import type { UserRoutine, RewardStatus } from '../shared/types';
+import { getParticipationById, getRewardByParticipation } from '../shared/api';
+import type { CampaignParticipation, RewardStatus } from '../shared/types';
 
 const statusSteps: { status: RewardStatus; label: string }[] = [
   { status: 'LOCK', label: '시작 전' },
@@ -21,7 +21,7 @@ const statusSteps: { status: RewardStatus; label: string }[] = [
 export function RewardDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [userRoutine, setUserRoutine] = useState<UserRoutine | null>(null);
+  const [participation, setParticipation] = useState<CampaignParticipation | null>(null);
   const [currentStatus, setCurrentStatus] = useState<RewardStatus>('LOCK');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -30,15 +30,15 @@ export function RewardDetailPage() {
       try {
         if (!id) return;
 
-        const routine = await getUserRoutineById(id);
-        if (routine) {
-          setUserRoutine(routine);
-          const progress = calculateProgress(routine.completedDays, routine.targetDays);
+        const data = await getParticipationById(id);
+        if (data) {
+          setParticipation(data);
+          const progress = calculateProgress(data.completedDays, data.campaign.targetDays);
           setCurrentStatus(determineRewardStatus(progress, true));
         }
 
         // 리워드 상태 조회
-        const rewardData = await getRewardByRoutine(id);
+        const rewardData = await getRewardByParticipation(id);
         if (rewardData) {
           setCurrentStatus(rewardData.status);
         }
@@ -61,7 +61,7 @@ export function RewardDetailPage() {
     );
   }
 
-  if (!userRoutine) {
+  if (!participation) {
     return (
       <AppLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] px-[20px]">
@@ -82,8 +82,8 @@ export function RewardDetailPage() {
     );
   }
 
-  const template = userRoutine.template;
-  const progress = calculateProgress(userRoutine.completedDays, userRoutine.targetDays);
+  const campaign = participation.campaign;
+  const progress = calculateProgress(participation.completedDays, campaign.targetDays);
   const rewardMessage = getRewardStatusMessage(currentStatus);
 
   const currentStepIndex = statusSteps.findIndex((s) => s.status === currentStatus);
@@ -111,7 +111,7 @@ export function RewardDetailPage() {
             리워드 상세
           </h1>
           <p className="text-[14px] text-[#8B95A1]">
-            {template.title} 루틴의 리워드예요
+            {campaign.title} 루틴의 리워드예요
           </p>
         </div>
 
@@ -120,27 +120,27 @@ export function RewardDetailPage() {
           {/* Reward Image */}
           <div className="w-full h-[200px] bg-[#F2F4F6] rounded-[12px] mb-[16px] flex items-center justify-center">
             <span className="text-[14px] text-[#8B95A1]">
-              {template.reward.category}
+              {campaign.reward.category}
             </span>
           </div>
 
           {/* Reward Info */}
           <div className="flex items-center gap-[6px] mb-[12px]">
-            {template.reward.brand && (
+            {campaign.reward.brand && (
               <Badge color="grey" variant="weak" size="small">
-                {template.reward.brand}
+                {campaign.reward.brand}
               </Badge>
             )}
             <Badge color="grey" variant="weak" size="small">
-              {template.reward.category}
+              {campaign.reward.category}
             </Badge>
           </div>
 
           <h2 className="text-[20px] font-bold text-[#191F28] mb-[8px]">
-            {template.reward.name}
+            {campaign.reward.name}
           </h2>
           <p className="text-[14px] text-[#6B7684] leading-[1.6]">
-            {template.reward.description}
+            {campaign.reward.description}
           </p>
         </Card>
 
@@ -158,11 +158,11 @@ export function RewardDetailPage() {
           </div>
           <ProgressBar value={progress} size="normal" color="blue" />
 
-          {progress < 90 && (
+          {progress < campaign.achievementRate && (
             <p className="mt-[12px] text-[13px] text-[#8B95A1]">
-              90% 이상 달성하면 리워드를 신청할 수 있어요!
+              {campaign.achievementRate}% 이상 달성하면 리워드를 신청할 수 있어요!
               <br />
-              현재 {Math.max(0, Math.ceil((90 - progress) / 100 * userRoutine.targetDays))}일 더 완료하면 돼요.
+              현재 {Math.max(0, Math.ceil((campaign.achievementRate - progress) / 100 * campaign.targetDays))}일 더 완료하면 돼요.
             </p>
           )}
         </Card>

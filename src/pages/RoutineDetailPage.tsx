@@ -1,7 +1,10 @@
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Button, Badge, Card, AppLayout } from '../shared/ui';
-import { getRoutineById, categoryInfo, difficultyConfig } from '../entities/routine';
-import type { VerificationType } from '../shared/types';
+import { Button, Badge, Card, AppLayout, Loader } from '../shared/ui';
+import { categoryInfo, difficultyConfig, campaignStatusConfig } from '../entities/campaign';
+import { getCampaignById } from '../shared/api';
+import { formatDateKorean, isFuture } from '../shared/lib/date';
+import type { Campaign, VerificationType } from '../shared/types';
 
 const verificationLabels: Record<VerificationType, { label: string; description: string[] }> = {
   time_record: {
@@ -54,18 +57,44 @@ export function RoutineDetailPage() {
   const location = useLocation();
   const routineType = location.state?.routineType || 'individual';
 
-  const routine = getRoutineById(id || '');
+  const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (!routine) {
+  useEffect(() => {
+    async function fetchCampaign() {
+      try {
+        if (!id) return;
+        const data = await getCampaignById(id);
+        setCampaign(data);
+      } catch (error) {
+        console.error('캠페인 조회 실패:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchCampaign();
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader size="medium" />
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!campaign) {
     return (
       <AppLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] px-[20px]">
           <span className="text-[48px] mb-[16px]">😢</span>
           <h2 className="text-[20px] font-bold text-[#191F28] mb-[8px]">
-            루틴을 찾을 수 없어요
+            캠페인을 찾을 수 없어요
           </h2>
           <p className="text-[14px] text-[#8B95A1] text-center mb-[24px]">
-            요청하신 루틴이 존재하지 않거나<br />삭제되었을 수 있어요.
+            요청하신 캠페인이 존재하지 않거나<br />삭제되었을 수 있어요.
           </p>
           <Button
             size="medium"
@@ -80,27 +109,35 @@ export function RoutineDetailPage() {
     );
   }
 
-  const categoryData = categoryInfo[routine.category];
-  const difficulty = difficultyConfig[routine.difficulty];
-  const verification = verificationLabels[routine.verificationType];
+  const categoryData = categoryInfo[campaign.category];
+  const difficulty = difficultyConfig[campaign.difficulty];
+  const verification = verificationLabels[campaign.verificationType];
+  const statusConfig = campaignStatusConfig[campaign.status];
 
-  const handleStart = () => {
-    navigate(`/routine/${routine.id}/setup`, {
-      state: { routineType, routine },
+  const canJoin =
+    (campaign.status === 'published' || campaign.status === 'active') &&
+    (!campaign.maxParticipants || campaign.currentParticipants < campaign.maxParticipants);
+
+  const isEnded = campaign.status === 'ended';
+  const hasNotStarted = isFuture(campaign.startDate);
+
+  const handleJoin = () => {
+    navigate(`/campaign/${campaign.id}/join`, {
+      state: { routineType, campaign },
     });
   };
 
   const typeLabel = routineType === 'team' ? '팀' : '개인';
 
-  const bottomCTA = (
+  const bottomCTA = canJoin ? (
     <Button
       size="large"
       variant="solid"
-      onClick={handleStart}
+      onClick={handleJoin}
       className="w-full bg-[#5B5CF9] hover:bg-[#4A4BE8]"
     >
       <span className="flex items-center justify-center gap-[8px]">
-        이 루틴 시작하기
+        이 캠페인 참여하기
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
           <path
             d="M7.5 15L12.5 10L7.5 5"
@@ -112,10 +149,14 @@ export function RoutineDetailPage() {
         </svg>
       </span>
     </Button>
-  );
+  ) : null;
 
   return (
-    <AppLayout bottomArea={bottomCTA} bottomAreaHeight={80} className="bg-[#F2F4F6]">
+    <AppLayout
+      bottomArea={bottomCTA}
+      bottomAreaHeight={bottomCTA ? 80 : 0}
+      className="bg-[#F2F4F6]"
+    >
       {/* Hero Section */}
       <div className="bg-[#333D48] px-[20px] pt-[24px] pb-[32px]">
         {/* Reward Badge */}
@@ -127,12 +168,23 @@ export function RoutineDetailPage() {
             />
           </svg>
           <span className="text-[12px] font-medium text-white">
-            리워드: {routine.reward.name}
+            리워드: {campaign.reward.name}
           </span>
         </div>
 
-        {/* Category & Type Badges */}
+        {/* Category & Type & Status Badges */}
         <div className="flex items-center gap-[6px] mb-[8px]">
+          <Badge
+            color="grey"
+            variant="weak"
+            size="small"
+            style={{
+              backgroundColor: statusConfig.bgColor,
+              color: statusConfig.color,
+            }}
+          >
+            {statusConfig.label}
+          </Badge>
           <Badge
             color="grey"
             variant="weak"
@@ -153,28 +205,41 @@ export function RoutineDetailPage() {
 
         {/* Title */}
         <div className="flex items-center gap-[10px] mb-[8px]">
-          <span className="text-[28px]">{routine.emoji}</span>
+          <span className="text-[28px]">{campaign.emoji}</span>
           <h2 className="text-[24px] font-bold text-white">
-            {routine.title}
+            {campaign.title}
           </h2>
         </div>
         <p className="text-[14px] text-[#B0B8C1]">
-          {routine.description}
+          {campaign.description}
         </p>
       </div>
 
       {/* Info Cards */}
       <div className="px-[20px] -mt-[16px]">
+        {/* Campaign Period Card */}
         <Card variant="elevated" size="medium" className="mb-[16px]">
-          <div className="grid grid-cols-3 gap-[16px]">
-            {/* Duration */}
+          <div className="grid grid-cols-2 gap-[16px] mb-[16px]">
             <div className="flex flex-col">
-              <span className="text-[12px] text-[#8B95A1] mb-[4px]">루틴 기간</span>
+              <span className="text-[12px] text-[#8B95A1] mb-[4px]">시작일</span>
               <span className="text-[15px] font-semibold text-[#191F28]">
-                {routine.defaultDuration}일
+                {formatDateKorean(campaign.startDate)}
               </span>
             </div>
-            {/* Difficulty */}
+            <div className="flex flex-col">
+              <span className="text-[12px] text-[#8B95A1] mb-[4px]">종료일</span>
+              <span className="text-[15px] font-semibold text-[#191F28]">
+                {formatDateKorean(campaign.endDate)}
+              </span>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-[16px]">
+            <div className="flex flex-col">
+              <span className="text-[12px] text-[#8B95A1] mb-[4px]">기간</span>
+              <span className="text-[15px] font-semibold text-[#191F28]">
+                {campaign.targetDays}일
+              </span>
+            </div>
             <div className="flex flex-col">
               <span className="text-[12px] text-[#8B95A1] mb-[4px]">난이도</span>
               <span
@@ -184,11 +249,29 @@ export function RoutineDetailPage() {
                 {difficulty.label}
               </span>
             </div>
-            {/* Verification */}
             <div className="flex flex-col">
               <span className="text-[12px] text-[#8B95A1] mb-[4px]">인증 방법</span>
               <span className="text-[15px] font-semibold text-[#191F28]">
                 {verification.label}
+              </span>
+            </div>
+          </div>
+        </Card>
+
+        {/* Achievement & Participants */}
+        <Card variant="elevated" size="medium" className="mb-[16px]">
+          <div className="grid grid-cols-2 gap-[16px]">
+            <div className="flex flex-col">
+              <span className="text-[12px] text-[#8B95A1] mb-[4px]">달성 기준</span>
+              <span className="text-[15px] font-semibold text-[#5B5CF9]">
+                {campaign.achievementRate}% 이상
+              </span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[12px] text-[#8B95A1] mb-[4px]">참여 인원</span>
+              <span className="text-[15px] font-semibold text-[#191F28]">
+                {campaign.currentParticipants}명
+                {campaign.maxParticipants && ` / ${campaign.maxParticipants}명`}
               </span>
             </div>
           </div>
@@ -226,12 +309,11 @@ export function RoutineDetailPage() {
             ))}
           </div>
 
-          {/* Weekly Target Notice */}
-          {routine.verificationConfig.frequency === 'weekly' &&
-            routine.verificationConfig.weeklyTarget && (
+          {campaign.verificationConfig.frequency === 'weekly' &&
+            campaign.verificationConfig.weeklyTarget && (
               <div className="mt-[16px] p-[12px] bg-[#F0F0FF] rounded-[8px]">
                 <p className="text-[13px] text-[#5B5CF9] font-medium">
-                  주 {routine.verificationConfig.weeklyTarget}회 인증이 필요해요
+                  주 {campaign.verificationConfig.weeklyTarget}회 인증이 필요해요
                 </p>
               </div>
             )}
@@ -244,7 +326,6 @@ export function RoutineDetailPage() {
           </p>
 
           <Card variant="elevated" size="medium">
-            {/* Reward Header */}
             <div className="flex items-center gap-[6px] mb-[12px]">
               <Badge
                 color="grey"
@@ -254,33 +335,30 @@ export function RoutineDetailPage() {
               >
                 시즌 파트너
               </Badge>
-              {routine.reward.brand && (
+              {campaign.reward.brand && (
                 <Badge color="grey" variant="weak" size="small">
-                  {routine.reward.brand}
+                  {campaign.reward.brand}
                 </Badge>
               )}
             </div>
 
-            {/* Reward Image Placeholder */}
             <div className="w-full h-[160px] bg-[#F2F4F6] rounded-[12px] mb-[16px] flex items-center justify-center">
               <span className="text-[14px] text-[#8B95A1]">
-                {routine.reward.category}
+                {campaign.reward.category}
               </span>
             </div>
 
-            {/* Reward Title */}
             <h3 className="text-[17px] font-bold text-[#191F28] mb-[12px]">
-              {routine.reward.name}
+              {campaign.reward.name}
             </h3>
 
-            {/* Reward Description */}
             <p className="text-[14px] text-[#6B7684] leading-[1.6]">
-              {routine.reward.description}
+              {campaign.reward.description}
             </p>
           </Card>
         </div>
 
-        {/* Success Rate Notice */}
+        {/* Notice */}
         <div className="mt-[16px] mb-[24px] flex items-start gap-[8px] px-[4px]">
           <svg
             width="16"
@@ -302,7 +380,9 @@ export function RoutineDetailPage() {
             />
           </svg>
           <p className="text-[13px] text-[#8B95A1]">
-            전체 참여율 90% 이상 달성 시 리워드가 지급됩니다.
+            전체 참여율 {campaign.achievementRate}% 이상 달성 시 리워드가 지급됩니다.
+            {isEnded && ' 이 캠페인은 종료되었습니다.'}
+            {hasNotStarted && ' 아직 시작 전인 캠페인이에요.'}
           </p>
         </div>
       </div>
