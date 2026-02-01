@@ -16,22 +16,6 @@ export type VerificationType =
   | 'simple_check'     // 단순 체크 (약복용/스트레칭/기상)
   | 'receipt_record';  // 영수증 기록 (절약)
 
-// 루틴 템플릿 (기획서 기준 22개 루틴)
-export interface RoutineTemplate {
-  id: string;
-  title: string;
-  description: string;
-  category: CategoryType;
-  subCategory?: CareSubCategory;
-  type: RoutineType;
-  difficulty: DifficultyLevel;
-  defaultDuration: number; // 기본 일수
-  verificationType: VerificationType;
-  verificationConfig: VerificationConfig;
-  reward: Reward;
-  emoji: string;
-}
-
 // 검증 설정
 export interface VerificationConfig {
   placeholder?: string;
@@ -42,23 +26,13 @@ export interface VerificationConfig {
   weeklyTarget?: number; // 주간 목표 횟수 (e.g., 주 3회)
 }
 
-export interface Routine {
-  id: string;
-  title: string;
-  description: string;
-  category: CategoryType;
-  subCategory?: CareSubCategory;
-  type: RoutineType;
-  difficulty: DifficultyLevel;
-  duration: string;
-  verificationMethod: string;
-  reward: Reward;
-  createdAt: string;
-  updatedAt: string;
-}
+// =============================================
+// Campaign (캠페인 - 어드민 발행)
+// =============================================
 
-export interface Reward {
-  id: string;
+export type CampaignStatus = 'draft' | 'published' | 'active' | 'ended';
+
+export interface CampaignReward {
   name: string;
   description: string;
   imageUrl: string;
@@ -66,12 +40,51 @@ export interface Reward {
   brand?: string;
 }
 
-export interface Category {
-  id: CategoryType;
-  name: string;
+export interface Campaign {
+  id: string;
+  // 불변 필드 (발행 후 수정 불가)
+  startDate: string;
+  endDate: string;
+  targetDays: number;
+  verificationType: VerificationType;
+  verificationConfig: VerificationConfig;
+  achievementRate: number;
+  reward: CampaignReward;
+  type: RoutineType;
+  // 수정 가능 필드
+  title: string;
   description: string;
+  category: CategoryType;
+  subCategory?: CareSubCategory;
+  difficulty: DifficultyLevel;
   emoji: string;
-  routines: string[];
+  // 메타
+  status: CampaignStatus;
+  maxParticipants?: number;
+  currentParticipants: number;
+  isFeatured: boolean;
+  publishedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// =============================================
+// Campaign Participation (캠페인 참여)
+// =============================================
+
+export type ParticipationStatus = 'active' | 'completed' | 'abandoned' | 'force_ended';
+
+export interface CampaignParticipation {
+  id: string;
+  userId: string;
+  campaignId: string;
+  campaign: Campaign;
+  completedDays: number;
+  status: ParticipationStatus;
+  notificationEnabled: boolean;
+  notificationTime?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // User Types
@@ -83,30 +96,14 @@ export interface User {
   createdAt: string;
 }
 
-// 사용자가 시작한 루틴
-export interface UserRoutine {
-  id: string;
-  userId: string;
-  templateId: string;
-  template: RoutineTemplate;
-  startDate: string;
-  endDate: string;
-  targetDays: number;
-  completedDays: number;
-  status: UserRoutineStatus;
-  notificationEnabled: boolean;
-  notificationTime?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export type UserRoutineStatus = 'active' | 'completed' | 'abandoned';
-
+// =============================================
 // 체크인 기록
+// =============================================
+
 export interface CheckIn {
   id: string;
   userId: string;
-  userRoutineId: string;
+  participationId: string;
   date: string;
   verificationType: VerificationType;
   verificationData: CheckInData;
@@ -158,14 +155,17 @@ export interface ReceiptRecordData {
   imageUrl?: string;
 }
 
+// =============================================
 // Reward Status
+// =============================================
+
 export type RewardStatus = 'LOCK' | 'PROGRESS' | 'UNLOCK' | 'APPLY' | 'SHIPPING' | 'DELIVERED';
 
 export interface UserReward {
   id: string;
   userId: string;
-  userRoutineId: string;
-  reward: Reward;
+  participationId: string;
+  reward: CampaignReward;
   status: RewardStatus;
   progress: number;
   unlockedAt?: string;

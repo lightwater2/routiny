@@ -5,6 +5,8 @@ import type {
   VerificationType,
   VerificationConfig,
   CareSubCategory,
+  CampaignStatus,
+  ParticipationStatus,
   RewardStatus,
   CheckInData,
   ShippingInfo,
@@ -24,43 +26,44 @@ export interface DbUser {
   updated_at: string;
 }
 
-export interface DbRoutineTemplate {
+export interface DbCampaign {
   id: string;
+  // 불변 필드
+  start_date: string;
+  end_date: string;
+  target_days: number;
+  verification_type: VerificationType;
+  verification_config: VerificationConfig;
+  achievement_rate: number;
+  reward_name: string;
+  reward_description: string;
+  reward_image_url: string | null;
+  reward_category: string;
+  reward_brand: string | null;
+  type: RoutineType;
+  // 수정 가능 필드
   title: string;
   description: string;
   category: CategoryType;
   sub_category: CareSubCategory | null;
-  type: RoutineType;
   difficulty: DifficultyLevel;
-  default_duration: number;
-  verification_type: VerificationType;
-  verification_config: VerificationConfig;
   emoji: string;
-  is_active: boolean;
+  // 메타
+  status: CampaignStatus;
+  max_participants: number | null;
+  current_participants: number;
+  is_featured: boolean;
+  published_at: string | null;
   created_at: string;
   updated_at: string;
 }
 
-export interface DbReward {
-  id: string;
-  name: string;
-  description: string;
-  image_url: string | null;
-  category: string;
-  brand: string | null;
-  template_id: string;
-  created_at: string;
-}
-
-export interface DbUserRoutine {
+export interface DbCampaignParticipation {
   id: string;
   user_id: string;
-  template_id: string;
-  start_date: string;
-  end_date: string;
-  target_days: number;
+  campaign_id: string;
   completed_days: number;
-  status: 'active' | 'completed' | 'abandoned';
+  status: ParticipationStatus;
   notification_enabled: boolean;
   notification_time: string | null;
   created_at: string;
@@ -70,7 +73,7 @@ export interface DbUserRoutine {
 export interface DbCheckIn {
   id: string;
   user_id: string;
-  user_routine_id: string;
+  participation_id: string;
   date: string;
   verification_type: VerificationType;
   verification_data: CheckInData;
@@ -81,8 +84,7 @@ export interface DbCheckIn {
 export interface DbUserReward {
   id: string;
   user_id: string;
-  user_routine_id: string;
-  reward_id: string;
+  participation_id: string;
   status: RewardStatus;
   progress: number;
   unlocked_at: string | null;
@@ -99,37 +101,28 @@ export interface DbUserReward {
 // Joined Types (JOIN 쿼리 결과)
 // =============================================
 
-export interface DbUserRoutineWithTemplate extends DbUserRoutine {
-  routine_templates: DbRoutineTemplate;
-  rewards: DbReward[];
-}
-
-export interface DbUserRewardWithReward extends DbUserReward {
-  rewards: DbReward;
+export interface DbParticipationWithCampaign extends DbCampaignParticipation {
+  campaigns: DbCampaign;
 }
 
 // =============================================
 // API Input Types
 // =============================================
 
-export interface CreateUserRoutineParams {
-  templateId: string;
-  startDate: string;
-  endDate: string;
-  targetDays: number;
+export interface JoinCampaignParams {
+  campaignId: string;
   notificationEnabled: boolean;
   notificationTime?: string;
 }
 
 export interface CreateCheckInParams {
-  userRoutineId: string;
+  participationId: string;
   date: string;
   verificationType: VerificationType;
   verificationData: CheckInData;
 }
 
 export interface ApplyRewardParams {
-  userRoutineId: string;
-  rewardId: string;
+  participationId: string;
   shippingInfo: ShippingInfo;
 }
