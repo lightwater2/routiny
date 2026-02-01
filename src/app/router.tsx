@@ -10,8 +10,15 @@ import { CheckInPage } from '../pages/CheckInPage';
 import { RewardDetailPage } from '../pages/RewardDetailPage';
 import { RewardApplyPage } from '../pages/RewardApplyPage';
 import { MyPage } from '../pages/MyPage';
+import {
+  AdminCampaignListPage,
+  AdminCampaignCreatePage,
+  AdminCampaignDetailPage,
+  AdminCampaignEditPage,
+} from '../features/admin/pages';
 
 export const router = createBrowserRouter([
+  // 유저 라우트
   {
     path: '/',
     element: <StartPage />,
@@ -21,15 +28,15 @@ export const router = createBrowserRouter([
     element: <CategoryPage />,
   },
   {
-    path: '/routines/:category',
+    path: '/campaigns/:category',
     element: <RoutineListPage />,
   },
   {
-    path: '/routine/:id',
+    path: '/campaign/:id',
     element: <RoutineDetailPage />,
   },
   {
-    path: '/routine/:id/setup',
+    path: '/campaign/:id/join',
     element: <RoutineSetupPage />,
   },
   {
@@ -55,5 +62,22 @@ export const router = createBrowserRouter([
   {
     path: '/my',
     element: <MyPage />,
+  },
+  // 어드민 라우트
+  {
+    path: '/admin/campaigns',
+    element: <AdminCampaignListPage />,
+  },
+  {
+    path: '/admin/campaigns/new',
+    element: <AdminCampaignCreatePage />,
+  },
+  {
+    path: '/admin/campaigns/:id',
+    element: <AdminCampaignDetailPage />,
+  },
+  {
+    path: '/admin/campaigns/:id/edit',
+    element: <AdminCampaignEditPage />,
   },
 ]);

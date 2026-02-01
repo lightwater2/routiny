@@ -47,7 +47,7 @@ export function CategoryPage() {
 
   const handleNext = () => {
     if (selectedCategory) {
-      navigate(`/routines/${selectedCategory}`, {
+      navigate(`/campaigns/${selectedCategory}`, {
         state: { routineType, category: selectedCategory }
       });
     }
