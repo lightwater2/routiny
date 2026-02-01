@@ -7,23 +7,14 @@ const TOSS_USER_KEY = 'routiny_toss_user_key';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 
 /**
- * 토스 미니앱 환경인지 확인
- */
-function isTossApp(): boolean {
-  try {
-    return typeof window !== 'undefined' && /toss/i.test(navigator.userAgent);
-  } catch {
-    return false;
-  }
-}
-
-/**
  * 토스 appLogin() 호출 → Edge Function으로 userKey 획득
+ * 토스 앱 환경이 아니면 bridge 호출에서 자연스럽게 실패 → null 반환
  */
 async function getTossUserKey(): Promise<string | null> {
   try {
     const { appLogin } = await import('@apps-in-toss/web-framework');
-    const { authorizationCode, referrer } = await appLogin();
+    const result = await appLogin();
+    const { authorizationCode, referrer } = result;
 
     const res = await fetch(`${SUPABASE_URL}/functions/v1/toss-auth`, {
       method: 'POST',
@@ -129,12 +120,10 @@ export async function getCurrentUser(): Promise<DbUser> {
     return getOrCreateUserByTossId(cachedTossKey);
   }
 
-  // 2. 토스 앱 환경이면 appLogin 시도
-  if (isTossApp()) {
-    const userKey = await getTossUserKey();
-    if (userKey) {
-      return getOrCreateUserByTossId(userKey);
-    }
+  // 2. appLogin 시도 (토스 앱이 아니면 자연스럽게 실패 → 폴백)
+  const userKey = await getTossUserKey();
+  if (userKey) {
+    return getOrCreateUserByTossId(userKey);
   }
 
   // 3. 폴백: device_id 방식
