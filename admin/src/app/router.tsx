@@ -4,6 +4,7 @@ import LoginPage from '../pages/LoginPage';
 import DashboardPage from '../pages/DashboardPage';
 import UsersPage from '../pages/UsersPage';
 import CampaignsPage from '../pages/CampaignsPage';
+import CampaignCreatePage from '../pages/CampaignCreatePage';
 import RewardsPage from '../pages/RewardsPage';
 
 export const router = createHashRouter([
@@ -18,6 +19,7 @@ export const router = createHashRouter([
       { index: true, element: <DashboardPage /> },
       { path: 'users', element: <UsersPage /> },
       { path: 'campaigns', element: <CampaignsPage /> },
+      { path: 'campaigns/new', element: <CampaignCreatePage /> },
       { path: 'rewards', element: <RewardsPage /> },
     ],
   },

@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../shared/api/supabase';
 import {
   formatDate,
@@ -23,6 +24,7 @@ const STATUS_FILTERS: { value: string; label: string }[] = [
 ];
 
 export default function CampaignsPage() {
+  const navigate = useNavigate();
   const [campaigns, setCampaigns] = useState<DbCampaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('ALL');
@@ -272,7 +274,15 @@ export default function CampaignsPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900">캠페인 관리</h1>
-        <span className="text-sm text-gray-500">총 {campaigns.length}개</span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-500">총 {campaigns.length}개</span>
+          <button
+            onClick={() => navigate('/campaigns/new')}
+            className="rounded-lg bg-[#5B5CF9] px-4 py-2 text-sm font-medium text-white hover:bg-[#4A4BE8]"
+          >
+            + 새 캠페인
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
